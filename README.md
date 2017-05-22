@@ -61,5 +61,5 @@
 4. Citing grups: Martin MD, Jay F, Castellano S, Slatkin M. 2017. Molecular Ecology.
 
 
-5. For more information or to report issues, contact Mike Martin: mike.martin@ntnu.no
+5. For more information check: github.com/sameoldmike/grups/. To report issues, contact Mike Martin: mike.martin@ntnu.no
 
