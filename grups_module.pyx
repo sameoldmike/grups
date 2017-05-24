@@ -551,7 +551,15 @@ def simObservedRead(num_observed_reads, contam_rate, contam_pop_AF, seq_errorrat
     #print alleles_observed
     return random.choice(alleles_observed)            
     
+
         
+def RepresentsInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
         
     
 def pileup_PWD(indiv1, indiv2, contam_rate1, contam_rate2, error_rate1, error_rate2, contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose):  

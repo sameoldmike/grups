@@ -1,4 +1,4 @@
-=== grups v1.0 DOCUMENTATION ===
+=== grups v1.1 DOCUMENTATION ===
 
 
 
@@ -9,7 +9,7 @@
     can be performed using only a subset of the input data (genomic positions passing desired filters, or included on an input list).  
 
 
-2. Prerequisites. grups v1.0 was developed and tested in the following environment:
+2. Prerequisites. grups v1.1 was developed and tested in the following environment:
     Python v2.7.5
     Python package numpy v1.11.2
     Python package matplotlib v1.5.3
@@ -25,20 +25,29 @@
 3. Usage. The scripts can be used in several modes. Following are some examples of typical usage:
     3A. Simulate pairwise genetic distances within a pedigree based on input VCFs.
         python pedigree_sims.py 
-            label=DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0000/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0005/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0010/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0100/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.1000 ds_rate_numSNPs=0.047062308 
-            min_AF=0.05 
-            chr_type=whole 
-            chr=1-22 
-            include=all 
-            reps=1
-            out=/home/people/michmar/humans/analyses/pedigree_sims/2016-10-14_demo_seq_err/ 
-            pedigree_pop=EUR 
-            contam_pop=EUR,EUR 
-            data_dir=/home/people/michmar/humans/1000genomes_v3_data_EURonly/ 
-            recomb_dir=/home/people/michmar/humans/analyses/recombination_maps/ 
-            q_rate=0.0000,0.0000/0.0005,0.0005/0.0010,0.0010/0.0100,0.0100/0.1000,0.1000 
-            c_rate=0.0000,0.0000/0.0000,0.0000/0.0000,0.0000/0.0000,0.0000 
-            mean_cov=10,10/10,10/10,10/10,10/10,10 
+            --label=DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0000/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0005/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0010/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.0100/DemonstrateSeqErr_SNPs300k_cov10X_minAF0.05_q0.1000 
+            --ds_rate_numSNPs 0.047062308 
+            --min_AF 0.05 
+            --chr 1-22 
+            --include all 
+            --reps 1
+            --out /home/people/michmar/humans/analyses/pedigree_sims/2017-05-24_testing/ 
+            --pedigree_pop EUR 
+            --contam_pop EUR,EUR 
+            --data_dir /home/people/michmar/humans/1000genomes_v3_data_EURonly/ 
+            --recomb_dir /home/people/michmar/humans/analyses/recombination_maps/ 
+            --q_rate 0.0000,0.0000/0.0005,0.0005/0.0010,0.0010/0.0100,0.0100/0.1000,0.1000 
+            --c_rate 0.0,0.0/0.0,0.0/0.0,0.0/0.0,0.0/0.0,0.0  
+            --mean_cov 10,10/10,10/10,10/10,10/10,10         
+        python pedigree_sims.py --label=Scenario1/Scenario2/Scenario3/Scenario4/Scenario5 --ds_rate_numSNPs 0.047062308 --min_AF 0.05 --chr 1-22 --include all --reps 1 --out /home/people/michmar/humans/analyses/pedigree_sims/2017-05-24_testing/ --pedigree_pop EUR --contam_pop EUR,EUR --data_dir /home/people/michmar/humans/1000genomes_v3_data_EURonly/ --recomb_dir /home/people/michmar/humans/analyses/recombination_maps/ --q_rate 0.0000,0.0000/0.0005,0.0005/0.0010,0.0010/0.0100,0.0100/0.1000,0.1000 --c_rate 0.0,0.0/0.0,0.0/0.0,0.0/0.0,0.0/0.0,0.0  --mean_cov 10,10/10,10/10,10/10,10/10,10 
+
+        # EXAMPLE OF USING TARGET FILE w/ --targets option
+        
+        # make pedigree_sims.py pedigree GENERALIZED with some kind of input file!
+
+
+
+
 
     3B. Generate and split pileup files for the simulation of pairwise genetic distances within a pedigree based on input BAMs
         1. samtools mpileup -q 30 -Q 30 -f ./1000genomes_v3_refseq/human_g1k_v37.fasta -l ./1000genomes_phase3/variant_sites.chr1-22.only_SNPs.txt ./1000g_v3_BAMs/NA20526.mapped.ILLUMINA.bwa.TSI.low_coverage.20130415.rmdup.bam ./1000g_v3_BAMs/NA20792.mapped.ILLUMINA.bwa.TSI.low_coverage.20120522.rmdup.bam | nice -n19 python ./scripts/PWD_from_stdin_2015-06-05.py chr=1-22 min_depth=2,2 min_qual=30 ignore_dels quiet filter_sites | gzip > ./1000g_v3_BAMs/pairwise_pileups_simspecific/NA20526.rmdup_NA20792.rmdup.PWD_from_stdin_2015-06-05.py.only_targets.only_SNPs.min_depth2_2.pileup.gz &
@@ -56,9 +65,7 @@
         2. cat ./analyses/PWD_distributions/PWD_from_stdin_2015-06-05.py.only_targets.only_SNPs.mindepth2_2.NA20526.rmdup_NA20792.rmdup.out | awk 'NF > 0' | awk 'BEGIN{max=0; min=10000;} {sum+=$1; sumsq+=$1*$1; if ($1>max){max=$1}; if ($1<min){min=$1}}END {print "n mean std max min"; print NR " " sum/NR " " sqrt(sumsq/NR - (sum/NR)**2) " " max " " min}'
 
 
-
-
-4. Citing grups: Martin MD, Jay F, Castellano S, Slatkin M. 2017. Molecular Ecology.
+4. Citing grups: Martin MD, Jay F, Castellano S, Slatkin M. 2017. Molecular Ecology. doi:10.1111/mec.14188 
 
 
 5. For more information check: github.com/sameoldmike/grups/. To report issues, contact Mike Martin: mike.martin@ntnu.no

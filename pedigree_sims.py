@@ -13,9 +13,8 @@ usage: python   pedigree_sims.py
                 chr_type=whole|trunc
                 include=all|poly|mono
                 out=path
-                [bed=file.bed] 
+                [targets=file.txt] 
                 [min_qual=float]    
-                [min_depth=int]    
                 [pileup=path.gz]                                                      
                 [verbose]
                 [self_comparison]
@@ -24,7 +23,6 @@ usage: python   pedigree_sims.py
                 [contam_pop=str,str]                    strings (EAS|AMR|AFR|EUR|SAS) identifying superpopulation with which to contaminate pedigree simulations
                 [ds_rate_numSNPs=float]                 fraction of filtered SNPs include in the analysis
                 [contam_numind=int,int]                 numbers of random individual genomes with which to contaminate pedigree simulations [or have it choose randomly from pop]
-                [writeAllData=0/1]                      whether or not to print to the .PWDdata file
                 [paramNumReps=int | int,int,int ...]    number of replicates to perform drawing from specified ranges for parameters c_rate, mean_cov, q_rate  
 """
 
@@ -36,11 +34,11 @@ usage: python   pedigree_sims.py
 def writePWDtoFiles(relationship_index):
     outfile[param_set][rep].write(str(float(pw_sum))+'\t')
     outfile_numvars[param_set][rep].write(str(numvars_actual)+'\t')
-    outfile_pwdiffs[param_set][rep].write(str(pwdiffsresults[4])+'\t')
-    outfile_pwdiffs_sibs[param_set][rep].write(str(pwdiffsresults[5])+'\t')     #sum_sibs
-    outfile_pwdiffs_gpgc[param_set][rep].write(str(pwdiffsresults[6])+'\t')     #sum_gpargchild
-    outfile_pwdiffs_twins[param_set][rep].write(str(pwdiffsresults[7])+'\t')    #sum_IDtwins
-    outfile_pwdiffs_fcous[param_set][rep].write(str(pwdiffsresults[8])+'\t')    #sum_firstcousin
+    #outfile_pwdiffs[param_set][rep].write(str(pwdiffsresults[4])+'\t')
+    #outfile_pwdiffs_sibs[param_set][rep].write(str(pwdiffsresults[5])+'\t')     #sum_sibs
+    #outfile_pwdiffs_gpgc[param_set][rep].write(str(pwdiffsresults[6])+'\t')     #sum_gpargchild
+    #outfile_pwdiffs_twins[param_set][rep].write(str(pwdiffsresults[7])+'\t')    #sum_IDtwins
+    #outfile_pwdiffs_fcous[param_set][rep].write(str(pwdiffsresults[8])+'\t')    #sum_firstcousin
     outfile_SNPscovered[param_set][rep].write(str(pwdiffsresults[2])+'\t') 
     if writeAllData == 1:
         all_PWD_data = sorted(pwdiffsresults[9], key=lambda element: element[0])
@@ -54,62 +52,62 @@ def writePWDtoFiles(relationship_index):
 def openOutputFiles():
     outfile[param_set].append(                          open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.out',                'a', 0))
     outfile_numvars[param_set].append(                  open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.numvars',            'a', 0))
-    outfile_pwdiffs[param_set].append(                  open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp',              'a', 0))    # expected pairwise difference for this chromosome for unrelated relationships 
-    outfile_pwdiffs_sibs[param_set].append(             open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_sibs',         'a', 0))    # expected pairwise difference for this chromosome for siblings + parent-child relationships 
-    outfile_pwdiffs_gpgc[param_set].append(             open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_gpgc',         'a', 0))    # expected pairwise difference for this chromosome for gparent/gchild + uncle/newphew + half-sibling relationships
-    outfile_pwdiffs_twins[param_set].append(            open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_twins',        'a', 0))    # expected pairwise difference for this chromosome for identical twin relationships
-    outfile_pwdiffs_fcous[param_set].append(            open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_fcous',        'a', 0))    # expected pairwise difference for this chromosome for first cousin relationships
+    #outfile_pwdiffs[param_set].append(                  open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp',              'a', 0))    # expected pairwise difference for this chromosome for unrelated relationships 
+    #outfile_pwdiffs_sibs[param_set].append(             open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_sibs',         'a', 0))    # expected pairwise difference for this chromosome for siblings + parent-child relationships 
+    #outfile_pwdiffs_gpgc[param_set].append(             open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_gpgc',         'a', 0))    # expected pairwise difference for this chromosome for gparent/gchild + uncle/newphew + half-sibling relationships
+    #outfile_pwdiffs_twins[param_set].append(            open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_twins',        'a', 0))    # expected pairwise difference for this chromosome for identical twin relationships
+    #outfile_pwdiffs_fcous[param_set].append(            open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.pwexp_fcous',        'a', 0))    # expected pairwise difference for this chromosome for first cousin relationships
     outfile_SNPscovered[param_set].append(              open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.numSNPscov',         'a', 0))
     #outfile_SNPfreqs[param_set].append(                open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.SNPfreqs',           'a', 0))    # row of freq(EUR_AF) and freq(pedigree population) for each included SNP
     outfile_labels[param_set].append(                   open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.labels',             'a', 0))    # column labels
-    if writeAllData == 1:
-        outfile_PWDdata[param_set].append([])
-        for rel in labels:
-            outfile_PWDdata[param_set][rep].append(     open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+rel+'.'+timenow+'.PWDdata',    'a', 0))    # 0/1 simulated for pairwise difference at each site
+    #if writeAllData == 1:
+    #    outfile_PWDdata[param_set].append([])
+    #    for rel in labels:
+    #        outfile_PWDdata[param_set][rep].append(     open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+rel+'.'+timenow+'.PWDdata',    'a', 0))    # 0/1 simulated for pairwise difference at each site
 
 def writeOutputFileEndlines():
     outfile[param_set][rep].write('\n')
     outfile_numvars[param_set][rep].write('\n')
-    outfile_pwdiffs[param_set][rep].write('\n')
-    outfile_pwdiffs_sibs[param_set][rep].write('\n')
-    outfile_pwdiffs_gpgc[param_set][rep].write('\n')
-    outfile_pwdiffs_twins[param_set][rep].write('\n')
-    outfile_pwdiffs_fcous[param_set][rep].write('\n')
+    #outfile_pwdiffs[param_set][rep].write('\n')
+    #outfile_pwdiffs_sibs[param_set][rep].write('\n')
+    #outfile_pwdiffs_gpgc[param_set][rep].write('\n')
+    #outfile_pwdiffs_twins[param_set][rep].write('\n')
+    #outfile_pwdiffs_fcous[param_set][rep].write('\n')
     outfile_SNPscovered[param_set][rep].write('\n')
     #outfile_SNPfreqs[param_set][rep].write('\n')
     outfile_labels[param_set][rep].write('\n')
-    if writeAllData == 1:
-        for R in range(len(outfile_PWDdata[param_set][rep])):
-            outfile_PWDdata[param_set][rep][R].write('\n')
+    #if writeAllData == 1:
+    #    for R in range(len(outfile_PWDdata[param_set][rep])):
+    #        outfile_PWDdata[param_set][rep][R].write('\n')
 
 def closeOutputFiles():
     outfile[param_set][rep].close()
     outfile_numvars[param_set][rep].close()
-    outfile_pwdiffs[param_set][rep].close()
-    outfile_pwdiffs_sibs[param_set][rep].close()
-    outfile_pwdiffs_gpgc[param_set][rep].close()
-    outfile_pwdiffs_twins[param_set][rep].close()
-    outfile_pwdiffs_fcous[param_set][rep].close()
+    #outfile_pwdiffs[param_set][rep].close()
+    #outfile_pwdiffs_sibs[param_set][rep].close()
+    #outfile_pwdiffs_gpgc[param_set][rep].close()
+    #outfile_pwdiffs_twins[param_set][rep].close()
+    #outfile_pwdiffs_fcous[param_set][rep].close()
     outfile_SNPscovered[param_set][rep].close()
     #outfile_SNPfreqs[param_set][rep].close()
     outfile_labels[param_set][rep].close()
-    if writeAllData == 1:
-        for rel in range(len(outfile_PWDdata[param_set][rep])):
-            outfile_PWDdata[param_set][rep][rel].close()
+    #if writeAllData == 1:
+    #    for rel in range(len(outfile_PWDdata[param_set][rep])):
+    #        outfile_PWDdata[param_set][rep][rel].close()
 
 def resetFileLists():
     outfile[param_set]                  = []
     outfile_numvars[param_set]          = []
-    outfile_pwdiffs[param_set]          = []
-    outfile_pwdiffs_sibs[param_set]     = []
-    outfile_pwdiffs_gpgc[param_set]     = []
-    outfile_pwdiffs_twins[param_set]    = []
-    outfile_pwdiffs_fcous[param_set]    = []
+    #outfile_pwdiffs[param_set]          = []
+    #outfile_pwdiffs_sibs[param_set]     = []
+    #outfile_pwdiffs_gpgc[param_set]     = []
+    #outfile_pwdiffs_twins[param_set]    = []
+    #outfile_pwdiffs_fcous[param_set]    = []
     outfile_SNPscovered[param_set]      = []
     #outfile_SNPfreqs[param_set]        = []
     outfile_labels[param_set]           = []
-    if writeAllData == 1:
-        outfile_PWDdata[param_set]      = []
+    #if writeAllData == 1:
+    #    outfile_PWDdata[param_set]      = []
 
 
 # define constants
@@ -127,10 +125,10 @@ import gzip
 import numpy as np
 import math
 import pyximport; pyximport.install()
-import module_fast_pedigree29 as mfp
+import grups_module as mfp
+import argparse
 
-
-# define command-line constants and options 
+# parse command-line constants and options 
 scriptname = os.path.split(sys.argv[0])[1] # filename of the script being run
 print '\n'
 shuffle = 1
@@ -143,186 +141,196 @@ min_qual = 0
 self_comparison = 0
 seq_errorrate = ['pileup', 'pileup']
 mean_coverage = 'pileup'
-bed_file = ''
+targets_file = ''
 min_AF = 0.0
 pedigree_pop='EUR'
 contam_pop=['EUR', 'EUR']
 downsample_rate = 1
 ds_rate_numSNPs = 1
 contam_numind = 0,0
-writeAllData=0
+#writeAllData=0
 paramNumReps=[1]
-for gg in range(0, len(sys.argv)):
-    this_arg = sys.argv[gg]
-    if this_arg.find('ds_rate=') != -1:                                                
-        cmd_arg = 'ds_rate='   
-        downsample_rate = float(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('ds_rate_numSNPs=') != -1:                                       
-        cmd_arg = 'ds_rate_numSNPs='   
-        ds_rate_numSNPs = float(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('c_rate=') != -1:
-        cmd_arg = 'c_rate='
-        contam_rate = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        param_sets = contam_rate.split('/')
-        contam_rate = []
-        for k in range(len(param_sets)):
-            contam_rate.append([[], []])
-            ind_params = param_sets[k].split(',')
-            print 'ind_params =', ind_params
-            for ind in range(len(ind_params)):
-                if ind_params[ind].find('-') != -1:
-                    ind_param_range = ind_params[ind].split('-')
-                else:
-                    ind_param_range = [ind_params[ind], ind_params[ind]]
-                contam_rate[k][ind] = [float(ind_param_range[0]), float(ind_param_range[1])]
-        print cmd_arg, contam_rate
-    elif this_arg.find('q_rate=') != -1:                                           
-        cmd_arg = 'q_rate='
-        seq_errorrate = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        param_sets = seq_errorrate.split('/')
-        seq_errorrate = []
-        for k in range(len(param_sets)):
-            seq_errorrate.append([[], []])
-            ind_params = param_sets[k].split(',')
-            print 'ind_params =', ind_params
-            for ind in range(len(ind_params)):
-                if ind_params[ind].find('-') != -1:
-                    ind_param_range = ind_params[ind].split('-')
-                else:
-                    ind_param_range = [ind_params[ind], ind_params[ind]]
-                seq_errorrate[k][ind] = [float(ind_param_range[0]), float(ind_param_range[1])]
-        print cmd_arg, seq_errorrate
-    elif this_arg.find('mean_cov=') != -1:
-        cmd_arg = 'mean_cov='
-        mean_coverage = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]     
-        param_sets = mean_coverage.split('/')
-        mean_coverage = []
-        for k in range(len(param_sets)):
-            mean_coverage.append([[], []])
-            ind_params = param_sets[k].split(',')
-            print 'ind_params =', ind_params
-            for ind in range(len(ind_params)):
-                if ind_params[ind].find('-') != -1:
-                    ind_param_range = ind_params[ind].split('-')
-                else:
-                    ind_param_range = [ind_params[ind], ind_params[ind]]
-                mean_coverage[k][ind] = [float(ind_param_range[0]), float(ind_param_range[1])]
-                if mean_coverage[k][ind] == 0:
-                    print 'mean_coverage[k][ind] == 0. Exiting now ...'
-                    exit()
-        print cmd_arg, mean_coverage
-    elif this_arg.find('paramNumReps=') != -1:
-        cmd_arg = 'paramNumReps='  
-        paramNumReps = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        param_sets = paramNumReps.split('/')
-        paramNumReps = []
-        for k in range(len(param_sets)):
-            paramNumReps.append(int(param_sets[k]))
-        print cmd_arg, paramNumReps
-    elif this_arg.find('label=') != -1:
-        cmd_arg = 'label='
-        output_label = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        output_label = output_label.split('/')        
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('data_dir=') != -1:
-        cmd_arg = 'data_dir='
-        data_dir = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('recomb_dir=') != -1:
-        cmd_arg = 'recomb_dir='
-        recomb_dir = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('reps=') != -1:
-        cmd_arg = 'reps='
-        num_reps = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('min_qual=') != -1:                                            
-        cmd_arg = 'min_qual='
-        min_qual = float(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('min_AF=') != -1:                                            
-        cmd_arg = 'min_AF='
-        min_AF = float(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('chr_type=') != -1:                                              
-        cmd_arg = 'chr_type='
-        chr_type = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('pedigree_pop=') != -1:                                              
-        cmd_arg = 'pedigree_pop='
-        pedigree_pop = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('contam_pop=') != -1:                                              
-        cmd_arg = 'contam_pop='
-        contam_pop = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        contam_pop = contam_pop.split(',')
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('include=') != -1:                                               
-        cmd_arg = 'include='
-        popAF_polymorph_filter = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('pileup=') != -1:                                                
-        cmd_arg = 'pileup='
-        qualities_pileup_filename = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        qualities_pileup_filelist = []
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        for yyy in range(1, 23):
-            qualities_pileup_filelist.append(qualities_pileup_filename[0:len(qualities_pileup_filename)-3]+'.chr'+str(yyy)+'.gz')
-            if os.path.exists(qualities_pileup_filelist[-1]) == False:
-                print 'error. file '+qualities_pileup_filelist[-1]+' not found. exiting.'
-                sys.exit()
+chr_type = 'whole'
+data_dir='./'
+out_dir='./'
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--ds_rate", type=str, help="FLOAT, proportion of SNPs to keep at true frequency (i.e. NOT change to 0% frequency) [default: 1.0]")
+parser.add_argument('--ds_rate_numSNPs', type=str, help="FLOAT, proportion of filtered SNP positions include in the analysis [default: 1.0]")            
+parser.add_argument('--c_rate', type=str, help="contamination rates (or rate ranges) for each desired scenario. format: FLOAT,FLOAT or FLOAT,FLOAT/FLOAT,FLOAT ... or FLOAT-FLOAT,FLOAT-FLOAT/FLOAT-FLOAT,FLOAT-FLOAT ...") 
+parser.add_argument('--q_rate', type=str, help="sequencing error rates  (or rate ranges) for each desired scenario. format: FLOAT,FLOAT or FLOAT,FLOAT/FLOAT,FLOAT ... or FLOAT-FLOAT,FLOAT-FLOAT/FLOAT-FLOAT,FLOAT-FLOAT ...")                                       
+parser.add_argument('--mean_cov', type=str, help="mean sequencing depths (or depth ranges) for each desired scenario. format: FLOAT,FLOAT or FLOAT,FLOAT/FLOAT,FLOAT ... or FLOAT-FLOAT,FLOAT-FLOAT/FLOAT-FLOAT,FLOAT-FLOAT ...") 
+parser.add_argument('--paramNumReps', type=str, help="number of replicates to perform when randomly drawing values from specified ranges for parameters c_rate, mean_cov, q_rate. format: INT or INT/INT/INT ... ") 
+parser.add_argument('--label', type=str, help="data output labels. format: STR/STR/STR ...") 
+parser.add_argument('--data_dir', type=str, help="path to 1000genomes input VCFs [default: working directory]") 
+parser.add_argument('--recomb_dir', type=str, help="path to recombination genetic map data") 
+parser.add_argument('--reps', type=str, help="INT, number of pedigree replicates to perform [1]") 
+parser.add_argument('--min_qual', type=str, help="INT, minimum base quality (phred-scale) of a pileup base to be included in simulations [default: 0]")                                       
+parser.add_argument('--min_AF', type=str, help="FLOAT, minimum allele frequency in pedigree superpopulation for SNP to be included in simulations [default: 0]")                                      
+#parser.add_argument('--chr_type', type=str, help="")                                           
+parser.add_argument('--pedigree_pop', type=str, help="EAS|AMR|AFR|EUR|SAS, superpopulation with which to perform pedigree simulations [default: EUR]")                                         
+parser.add_argument('--contam_pop', type=str, help="superpopulation with which to contaminate pedigree simulations. format: STR,STR [default: EUR,EUR]")                                           
+parser.add_argument('--include', type=str, help="all|poly|mono")                                        
+parser.add_argument('--pileup', type=str, help="path to input pileup file to be used in simulations")                                            
+parser.add_argument('--chr', type=str, help="which chromosome(s) to include in the simulations. The desired chromosomes are selected automatically when provided with input pileup and/or targets files. format: INT or INT-INT or INT,INT or INT-INT,INT ..., etc.")                                               
+parser.add_argument('--verbose', type=str, help="turn on verbose output mode, e.g. for debugging [default: off]")                                            
+parser.add_argument('--self_comparison', type=str, help="turn on self-comparison mode (only used when an input pileup file is defined) [default: off]")                                           
+parser.add_argument('--out', type=str, help="path to directory for output [default: working directory]") 
+parser.add_argument('--targets', type=str, help="path to file defining target genomic positions")   # include an example file with scripts
+parser.add_argument('--contam_numind', type=str, help="numbers of random individual genomes with which to contaminate pedigree simulations. format: INT,INT. [default: contaminate with population allele frequencies]")   
+#parser.add_argument('--writeAllData', type=str, help="")   
+
+args = parser.parse_args()
+if args.ds_rate:
+    downsample_rate = float(args.ds_rate)
+    print 'ds_rate =', downsample_rate
+if args.ds_rate_numSNPs:
+    ds_rate_numSNPs = float(args.ds_rate_numSNPs)
+    print 'ds_rate_numSNPs =', ds_rate_numSNPs
+if args.c_rate:
+    contam_rate = args.c_rate
+    param_sets = contam_rate.split('/')
+    contam_rate = []
+    for k in range(len(param_sets)):
+        contam_rate.append([[], []])
+        ind_params = param_sets[k].split(',')
+        #print 'ind_params =', ind_params
+        for ind in range(len(ind_params)):
+            if ind_params[ind].find('-') != -1:
+                ind_param_range = ind_params[ind].split('-')
             else:
-                print '    found file '+qualities_pileup_filelist[-1]
-    elif this_arg.find('chr=') != -1:                                                   
-        cmd_arg = 'chr='
-        chrlist = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        chrlist = chrlist.split(',')
-        new_chr = []
-        for x in chrlist:
-            x = x.split('-')
-            if len(x) == 1:
-                new_chr.append(int(x[0]))
-            elif len(x) == 2:
-                for z in range(int(x[0]), int(x[1])+1):
-                    new_chr.append(z)
+                ind_param_range = [ind_params[ind], ind_params[ind]]
+            contam_rate[k][ind] = [float(ind_param_range[0]), float(ind_param_range[1])]
+    print 'c_rate =', contam_rate
+if args.q_rate:                                     
+    seq_errorrate = args.q_rate
+    param_sets = seq_errorrate.split('/')
+    seq_errorrate = []
+    for k in range(len(param_sets)):
+        seq_errorrate.append([[], []])
+        ind_params = param_sets[k].split(',')
+        #print 'ind_params =', ind_params
+        for ind in range(len(ind_params)):
+            if ind_params[ind].find('-') != -1:
+                ind_param_range = ind_params[ind].split('-')
             else:
-                print 'error parsing chr= statement'
-        chrlist = [x-1 for x in new_chr]
-        random.shuffle(chrlist)
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]        
-    elif this_arg.find('verbose') != -1:                                              
-        verbose = 1
-        print 'verbose =', verbose    
-    elif this_arg.find('self_comparison') != -1:                                              
-        self_comparison = 1
-        print 'self_comparison =', self_comparison          
-    elif this_arg.find('out=') != -1:
-        cmd_arg = 'out='
-        out_dir = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        if not out_dir.endswith('/'):
-            out_dir = out_dir+'/'
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        if not os.path.isdir(out_dir):
-            os.makedirs(out_dir)
-            print '    creating dir '+out_dir
-    elif this_arg.find('bed=') != -1:
-        cmd_arg = 'bed='  
-        bed_file = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('contam_numind=') != -1:
-        cmd_arg = 'contam_numind='  
-        contam_numind = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        contam_numind = contam_numind.split(',')
-        contam_numind[0] = int(contam_numind[0])
-        contam_numind[1] = int(contam_numind[1])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('writeAllData=') != -1:
-        cmd_arg = 'writeAllData='  
-        writeAllData = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
+                ind_param_range = [ind_params[ind], ind_params[ind]]
+            seq_errorrate[k][ind] = [float(ind_param_range[0]), float(ind_param_range[1])]
+    print 'q_rate =', seq_errorrate
+if args.mean_cov:
+    mean_coverage = args.mean_cov  
+    param_sets = mean_coverage.split('/')
+    mean_coverage = []
+    for k in range(len(param_sets)):
+        mean_coverage.append([[], []])
+        ind_params = param_sets[k].split(',')
+        #print 'ind_params =', ind_params
+        for ind in range(len(ind_params)):
+            if ind_params[ind].find('-') != -1:
+                ind_param_range = ind_params[ind].split('-')
+            else:
+                ind_param_range = [ind_params[ind], ind_params[ind]]
+            mean_coverage[k][ind] = [float(ind_param_range[0]), float(ind_param_range[1])]
+            if mean_coverage[k][ind] == 0:
+                print 'mean_coverage[k][ind] == 0. Exiting now ...'
+                exit()
+    print 'mean_cov =', mean_coverage
+if args.paramNumReps:
+    paramNumReps = args.paramNumReps
+    param_sets = paramNumReps.split('/')
+    paramNumReps = []
+    for k in range(len(param_sets)):
+        paramNumReps.append(int(param_sets[k]))
+    print 'paramNumReps =', paramNumReps
+if args.label:
+    output_label = args.label
+    output_label = output_label.split('/')        
+    print 'label =', output_label
+if args.data_dir:
+    data_dir = args.data_dir
+    print 'data_dir =', data_dir
+if args.recomb_dir:
+    recomb_dir = args.recomb_dir
+    print 'recomb_dir =', recomb_dir
+if args.reps:
+    num_reps = int(args.reps)
+    print 'reps =', num_reps
+if args.min_qual:                                    
+    min_qual = float(args.min_qual)
+    print 'min_qual =', min_qual
+if args.min_AF:
+    min_AF = float(args.min_AF)
+    print 'min_AF =', min_AF                       
+#if args.chr_type:
+#    chr_type = args.chr_type
+#    print 'chr_type =', chr_type
+if args.pedigree_pop:
+    pedigree_pop = args.pedigree_pop
+    print 'pedigree_pop =', pedigree_pop         
+if args.contam_pop:                                        
+    contam_pop = args.contam_pop
+    contam_pop = contam_pop.split(',')
+    print 'contam_pop =', contam_pop
+if args.include:
+    popAF_polymorph_filter = args.include
+    print 'include =', popAF_polymorph_filter 
+if args.pileup:                                           
+    qualities_pileup_filename = args.pileup
+    qualities_pileup_filelist = []
+    print 'pileup =', qualities_pileup_filename
+    for yyy in range(1, 23):
+        qualities_pileup_filelist.append(qualities_pileup_filename[0:len(qualities_pileup_filename)-3]+'.chr'+str(yyy)+'.gz')
+        if os.path.exists(qualities_pileup_filelist[-1]) == False:
+            print 'error. file '+qualities_pileup_filelist[-1]+' not found. exiting.'
+            sys.exit()
+        else:
+            print '    found file '+qualities_pileup_filelist[-1]
+if args.chr:                                         
+    chrlist = args.chr
+    chrlist = chrlist.split(',')
+    new_chr = []
+    for x in chrlist:
+        x = x.split('-')
+        if len(x) == 1:
+            new_chr.append(int(x[0]))
+        elif len(x) == 2:
+            for z in range(int(x[0]), int(x[1])+1):
+                new_chr.append(z)
+        else:
+            print 'error parsing chr= statement'
+    chrlist = [x-1 for x in new_chr]
+    random.shuffle(chrlist)
+    print 'chr =', chrlist
+if args.verbose:                                          
+    verbose = 1
+    print 'verbose =', verbose    
+if args.self_comparison:                                         
+    self_comparison = 1
+    print 'self_comparison =', self_comparison 
+if args.out:
+    out_dir = args.out
+    if not out_dir.endswith('/'):
+        out_dir = out_dir+'/'
+    print 'out_dir =', out_dir
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+        print '    creating dir '+out_dir
+if args.targets:
+    cmd_arg = 'targets='  
+    targets_file = args.targets
+    print 'targets_file =', targets_file
+if args.contam_numind:
+    contam_numind = args.contam_numind
+    contam_numind = contam_numind.split(',')
+    contam_numind[0] = int(contam_numind[0])
+    contam_numind[1] = int(contam_numind[1])
+    print 'contam_numind =', contam_numind
+#if args.writeAllData:   
+#    writeAllData = int(args.writeAllData)
+#    print 'writeAllData =', writeAllData
 print ' '
+
+
 
 
 
@@ -507,7 +515,7 @@ for param_set in range(len(output_label)):
         outfile_args.write('recomb_dir = '+str(recomb_dir)+' (using non-uniform recombination rates)\n')
     else:
         outfile_args.write('recomb_rate = '+str(recomb_rate)+'\n')
-    outfile_args.write('writeAllData = '+str(writeAllData)+'\n')
+    #outfile_args.write('writeAllData = '+str(writeAllData)+'\n')
     outfile_args.write('paramNumReps = '+str(paramNumReps)+'\n')
     for rep in range(paramNumReps[param_set]):
         outfile_args.write('\tparam set '+str(param_set)+' replicate '+str(rep)+':\t'                                               \
@@ -521,12 +529,12 @@ for param_set in range(len(output_label)):
 # ==========================================================================================================================================
 # HASH IN BED-LIKE TARGET SNP POSITIONS FILE (W/ ALT/REF ALLELE INFO IF INCLUDED)
 # ==========================================================================================================================================
-if bed_file != '':
+if targets_file != '':
     if verbose == 1:
         print 'hashing list of target positions'
 
     target_positions = {}
-    input_file = open(bed_file, "rU")
+    input_file = open(targets_file, "rU")
     read_data = csv.reader(input_file, dialect=csv.excel_tab, lineterminator='\n', quoting=csv.QUOTE_NONE)
     for row in read_data:
         if len(row) == 2:
@@ -627,15 +635,15 @@ print 'comparisons to make:', labels
 # create empty lists of results and calculations output files
 outfile                 = [[] for _ in xrange(len(output_label))]
 outfile_numvars         = [[] for _ in xrange(len(output_label))]
-outfile_pwdiffs         = [[] for _ in xrange(len(output_label))]
-outfile_pwdiffs_sibs    = [[] for _ in xrange(len(output_label))]
-outfile_pwdiffs_gpgc    = [[] for _ in xrange(len(output_label))]
-outfile_pwdiffs_twins   = [[] for _ in xrange(len(output_label))]
-outfile_pwdiffs_fcous   = [[] for _ in xrange(len(output_label))]
+#outfile_pwdiffs         = [[] for _ in xrange(len(output_label))]
+#outfile_pwdiffs_sibs    = [[] for _ in xrange(len(output_label))]
+#outfile_pwdiffs_gpgc    = [[] for _ in xrange(len(output_label))]
+#outfile_pwdiffs_twins   = [[] for _ in xrange(len(output_label))]
+#outfile_pwdiffs_fcous   = [[] for _ in xrange(len(output_label))]
 outfile_SNPscovered     = [[] for _ in xrange(len(output_label))]
 outfile_labels          = [[] for _ in xrange(len(output_label))]
-if writeAllData == 1:
-    outfile_PWDdata     = [[] for _ in xrange(len(output_label))]
+#if writeAllData == 1:
+#    outfile_PWDdata     = [[] for _ in xrange(len(output_label))]
 
 
 
@@ -763,7 +771,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(inbred[chr], inbred[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tinbred-inbred, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('inbred-inbred'))
 
                 # IDENTICAL RELATIONSHIP
@@ -772,7 +779,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(father[chr], father[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tfather-father, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('father-father'))
 
                 # PARENT-CHILD RELATIONSHIP
@@ -781,7 +787,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(father[chr], child1[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tfather-child1, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('father-child1'))    
         
                 # SIBLING RELATIONSHIP
@@ -790,7 +795,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(child1[chr], child2[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tchild1-child2, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('child1-child2'))
 
                 # GRANDPARENT-GRANDCHILD RELATIONSHIP
@@ -799,7 +803,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(mother[chr], cousin[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tmother-cousin, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('mother-cousin')) 
 
                 # AVUNCULAR RELATIONSHIP
@@ -808,7 +811,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(child2[chr], gchild[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tchild2-gchild, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('child2-gchild'))
 
                 # HALF-SIBLING RELATIONSHIP
@@ -817,7 +819,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(gchild[chr], halfsib[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\gchild-halfsib, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('gchild-halfsib'))        
 
                 # COUSIN RELATIONSHIP
@@ -826,7 +827,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(cousin[chr], gchild[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tcousin-gchild, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('cousin-gchild')) 
 
                 # UNRELATED RELATIONSHIP
@@ -835,7 +835,6 @@ for counter in range(1, num_reps+1):
                 else:
                     pwdiffsresults = mfp.pileup_PWD(father[chr], mother[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
-                #print '        '+'\tfather-mother, chr '+str(chr+1)+'\t\t'+str(pw_sum)+'\t'+str(pwdiffsresults[2])+'\t'+str(float(pw_sum)/pwdiffsresults[2])
                 writePWDtoFiles(labels.index('father-mother'))        
 
                 # write labels to .labels file 
