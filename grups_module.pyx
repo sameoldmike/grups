@@ -124,7 +124,7 @@ class Individual:
                 if np.random.random() < interval_prob_recomb:
                     recombPos.append(pair_counter)
                 pair_counter += 1 
-            print '            total prob of recombination on this chr =', total_prob
+            #print '            total prob of recombination on this chr =', total_prob
         
         # print debugging stuff
         # for g in  range(0, len(recombPos)):

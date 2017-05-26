@@ -1,3 +1,21 @@
+# define constants
+recomb_rate = 0.000000013   # intra-locus uniform recombination rate [Prufer et al 2014, SI 16a]
+
+
+# import packages
+import sys
+import os.path
+import datetime
+import pysam
+import random
+#import code #code.interact(local=locals())
+import gzip
+import numpy as np
+import math
+import pyximport; pyximport.install()
+import grups_module as mfp
+import argparse
+
 
 # define functions
 def writePWDtoFiles(relationship_index):
@@ -9,14 +27,14 @@ def writePWDtoFiles(relationship_index):
     #outfile_pwdiffs_twins[param_set][rep].write(str(pwdiffsresults[7])+'\t')    #sum_IDtwins
     #outfile_pwdiffs_fcous[param_set][rep].write(str(pwdiffsresults[8])+'\t')    #sum_firstcousin
     outfile_SNPscovered[param_set][rep].write(str(pwdiffsresults[2])+'\t') 
-    if writeAllData == 1:
-        all_PWD_data = sorted(pwdiffsresults[9], key=lambda element: element[0])
-        for position in range(0, len(all_PWD_data)):
-            #print 'position =', position
-            #print 'all_PWD_data[position] =', all_PWD_data[position]
-            outfile_PWDdata[param_set][relationship_index].write(str(chr+1)+'\t'+ \
-                                                                 str(all_PWD_data[position][0])+'\t'+ \
-                                                                 str(all_PWD_data[position][1])+'\n') 
+    #if writeAllData == 1:
+    #    all_PWD_data = sorted(pwdiffsresults[9], key=lambda element: element[0])
+    #    for position in range(0, len(all_PWD_data)):
+    #        #print 'position =', position
+    #        #print 'all_PWD_data[position] =', all_PWD_data[position]
+    #        outfile_PWDdata[param_set][relationship_index].write(str(chr+1)+'\t'+ \
+    #                                                             str(all_PWD_data[position][0])+'\t'+ \
+    #                                                             str(all_PWD_data[position][1])+'\n') 
 
 def openOutputFiles():
     outfile[param_set].append(                          open(out_dir+scriptname+'.'+output_label[param_set]+'.paramRep'+str(rep)+'.'+timenow+'.out',                'a', 0))
@@ -78,24 +96,58 @@ def resetFileLists():
     #if writeAllData == 1:
     #    outfile_PWDdata[param_set]      = []
 
+def parsePedigreeFile(ped_defintion):
+    import csv
+    
+    input_file = open(ped_defintion, "rU")
+    read_data = csv.reader(input_file, dialect=csv.excel_tab, lineterminator='\n', quoting=csv.QUOTE_NONE)
+    relateds = []
+    parsing_individuals = 0 
+    parsing_relationships = 0
+    parsing_comparisons = 0
+    for row in read_data:
+        if row != '' and len(row) != 0:
+            if row[0][0] != "#":
+                if row == ["INDIVIDUALS"]:
+                    parsing_individuals = 1
+                    parsing_relationships = 0
+                    parsing_comparisons = 0
+                elif row == ["RELATIONSHIPS"]:
+                    parsing_individuals = 0
+                    parsing_relationships = 1
+                    parsing_comparisons = 0
+                    print 'defined INDIVIDUALS:'
+                    for x in individuals:
+                        print '    ', x
+                elif row == ["COMPARISONS"]:
+                    parsing_individuals = 0
+                    parsing_relationships = 0
+                    parsing_comparisons = 1
+                    print 'defined RELATIONSHIPS:'
+                    for x in range(0, len(relationships)):
+                        print '    ', relationships[x][0], 'offspring of', relationships[x][1], 'and', relationships[x][2]
+                elif parsing_individuals == 1:
+                    individuals.append(row[0])
+                elif parsing_relationships == 1:
+                    temp = row[0].split('=')
+                    offspring = temp[0]
+                    temp = temp[1].strip(')')
+                    parents = temp.split('(')[1].split(',')
+                    relationships.append([offspring, parents[0], parents[1]])
+                    relateds.append(offspring)
+                elif parsing_comparisons == 1:
+                    temp = row[0].split('=')
+                    printlabel = temp[0]
+                    temp = temp[1].split(')')
+                    pair = temp[0].split('(')[1].split(',')
+                    comparisons.append([printlabel, pair[0], pair[1]])
+    print 'defined COMPARISONS:'
+    for x in range(0, len(comparisons)):
+        print '    <', comparisons[x][0], '> label for comparison of', comparisons[x][1], 'and', comparisons[x][2]
+    input_file.close()
 
-# define constants
-recomb_rate = 0.000000013   # intra-locus uniform recombination rate [Prufer et al 2014, SI 16a]
 
 
-# import packages
-import sys
-import os.path
-import datetime
-import pysam
-import random
-#import code #code.interact(local=locals())
-import gzip
-import numpy as np
-import math
-import pyximport; pyximport.install()
-import grups_module as mfp
-import argparse
 
 # parse command-line constants and options 
 scriptname = os.path.split(sys.argv[0])[1] # filename of the script being run
@@ -122,6 +174,10 @@ paramNumReps=[1]
 chr_type = 'whole'
 data_dir='./'
 out_dir='./'
+individuals = []
+relationships = []
+comparisons = []
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ds_rate", type=str, help="FLOAT, proportion of SNPs to keep at true frequency (i.e. NOT change to 0% frequency) [default: 1.0]")
@@ -148,6 +204,7 @@ parser.add_argument('--out', type=str, help="path to directory for output [defau
 parser.add_argument('--targets', type=str, help="path to file defining target genomic positions")
 parser.add_argument('--contam_numind', type=str, help="numbers of random individual genomes with which to contaminate pedigree simulations. format: INT,INT. [default: contaminate with population allele frequencies]")   
 #parser.add_argument('--writeAllData', type=str, help="")   
+parser.add_argument('--ped', type=str, help="path to input pedigree definition file")   
 
 args = parser.parse_args()
 if args.ds_rate:
@@ -297,6 +354,8 @@ if args.contam_numind:
 #if args.writeAllData:   
 #    writeAllData = int(args.writeAllData)
 #    print 'writeAllData =', writeAllData
+if args.ped:
+    parsePedigreeFile(args.ped)
 print ' '
 
 
@@ -503,7 +562,6 @@ if targets_file != '':
     if verbose == 1:
         print 'hashing list of target positions'
 
-    target_positions = {}
     input_file = open(targets_file, "rU")
     read_data = csv.reader(input_file, dialect=csv.excel_tab, lineterminator='\n', quoting=csv.QUOTE_NONE)
     for row in read_data:
@@ -590,16 +648,19 @@ random.shuffle(newIDs)
 
 
 # define comparison labels
-labels = [  'inbred-inbred',    \
-            'father-father',    \
-            'father-child1',    \
-            'child1-child2',    \
-            'mother-cousin',    \
-            'child2-gchild',    \
-            'gchild-halfsib',   \
-            'cousin-gchild',    \
-            'father-mother'     ]            
-print 'comparisons to make:', labels
+labels = []
+for k in range(0, len(comparisons)):
+    labels.append(comparisons[k][0])
+# labels = [  'inbred-inbred',    \
+#             'father-father',    \
+#             'father-child1',    \
+#             'child1-child2',    \
+#             'mother-cousin',    \
+#             'child2-gchild',    \
+#             'gchild-halfsib',   \
+#             'cousin-gchild',    \
+#             'father-mother'     ]            
+#print 'comparisons to make:', labels
 
 
 
@@ -623,51 +684,79 @@ for counter in range(1, num_reps+1):
     if shuffle == 1:
         random.shuffle(pedigree_pop_ID_choices)
     
-    father      = [None] * len(input_chromosome_file)
-    mother      = [None] * len(input_chromosome_file)
-    child1      = [None] * len(input_chromosome_file)
-    child2      = [None] * len(input_chromosome_file)
-    wife        = [None] * len(input_chromosome_file)
-    gchild      = [None] * len(input_chromosome_file)
-    cousin      = [None] * len(input_chromosome_file)
-    husband     = [None] * len(input_chromosome_file)  
-    inbred      = [None] * len(input_chromosome_file)
-    stepmom     = [None] * len(input_chromosome_file)
-    halfsib     = [None] * len(input_chromosome_file)
+    indiv_vars = []
+    for k in individuals:
+        indiv_vars.append([None] * len(input_chromosome_file))
+    #father      = [None] * len(input_chromosome_file)
+    #mother      = [None] * len(input_chromosome_file)
+    #child1      = [None] * len(input_chromosome_file)
+    #child2      = [None] * len(input_chromosome_file)
+    #wife        = [None] * len(input_chromosome_file)
+    #gchild      = [None] * len(input_chromosome_file)
+    #cousin      = [None] * len(input_chromosome_file)
+    #husband     = [None] * len(input_chromosome_file)  
+    #inbred      = [None] * len(input_chromosome_file)
+    #stepmom     = [None] * len(input_chromosome_file)
+    #halfsib     = [None] * len(input_chromosome_file)
     
-    # choose one genome sequence for each role in pedigree (same for all chromosomes)
-    father_name = pedigree_pop_ID_choices.pop()
-    print 'father name =', pedigree_pop_ID_lookup[father_name]
-    mother_name = pedigree_pop_ID_choices.pop()
-    print 'mother name =', pedigree_pop_ID_lookup[mother_name]    
-    wife_name = pedigree_pop_ID_choices.pop()
-    print 'wife name =', pedigree_pop_ID_lookup[wife_name]
-    husband_name = pedigree_pop_ID_choices.pop()
-    print 'husband name =', pedigree_pop_ID_lookup[husband_name]
-    stepmom_name = pedigree_pop_ID_choices.pop()
-    print 'stepmom name =', pedigree_pop_ID_lookup[stepmom_name]
+    # choose a specific, unique genome sequence for each role in pedigree (same for all chromosomes)
+    print 'Choosing genomes for each individual:' 
+    indiv_vars_names = []
+    for k in range(0, len(indiv_vars)):
+        indiv_vars_names.append(pedigree_pop_ID_choices.pop())
+        print 'Individual <', individuals[k], '> source genome ID =', pedigree_pop_ID_lookup[indiv_vars_names[k]], '(', indiv_vars_names[k], ')'
+    #father_name = pedigree_pop_ID_choices.pop()
+    #print 'father name =', pedigree_pop_ID_lookup[father_name]
+    #mother_name = pedigree_pop_ID_choices.pop()
+    #print 'mother name =', pedigree_pop_ID_lookup[mother_name]    
+    #wife_name = pedigree_pop_ID_choices.pop()
+    #print 'wife name =', pedigree_pop_ID_lookup[wife_name]
+    #husband_name = pedigree_pop_ID_choices.pop()
+    #print 'husband name =', pedigree_pop_ID_lookup[husband_name]
+    #stepmom_name = pedigree_pop_ID_choices.pop()
+    #print 'stepmom name =', pedigree_pop_ID_lookup[stepmom_name]
     
     
+    
+    # define unrelated individuals
+    unrels = individuals[:]
+    for m in range(0, len(relationships)):
+        unrels.remove(relationships[m][0])
+    print 'UNRELATEDS:', unrels
+
+    
+    family_unrel_names = []
+    family_unrel_chrs = []
     for chr in chrlist:     # chosen chrs in random order
         # create individual object for this chromosome for each individual
-        father[chr]     = mfp.Individual(father_name)
-        mother[chr]     = mfp.Individual(mother_name)
-        wife[chr]       = mfp.Individual(wife_name)
-        husband[chr]    = mfp.Individual(husband_name)
-        stepmom[chr]    = mfp.Individual(stepmom_name)
-        family_unrel_names = [father_name, mother_name, wife_name, husband_name, stepmom_name]
-        family_unrel_chrs = [father[chr], mother[chr], wife[chr] , husband[chr], stepmom[chr]]
+        for k in range(0, len(individuals)):
+            #print 'indiv_vars[k][chr] =', indiv_vars[k][chr]
+            #print 'indiv_vars_names[k] =', indiv_vars_names[k]
+            indiv_vars[k][chr] = mfp.Individual(indiv_vars_names[k])
+        for r in unrels: 
+            family_unrel_names.append(indiv_vars_names[individuals.index(r)])
+            family_unrel_chrs.append(indiv_vars[individuals.index(r)][chr])  
+            
+        #father[chr]     = mfp.Individual(father_name)
+        #mother[chr]     = mfp.Individual(mother_name)
+        #wife[chr]       = mfp.Individual(wife_name)
+        #husband[chr]    = mfp.Individual(husband_name)
+        #stepmom[chr]    = mfp.Individual(stepmom_name)
+        #family_unrel_names = [father_name, mother_name, wife_name, husband_name, stepmom_name]
+        #family_unrel_chrs = [father[chr], mother[chr], wife[chr] , husband[chr], stepmom[chr]]
 
         
         # print status info
-        print 'rep: '+str(counter)+' of '+str(num_reps)+' (chr '+str(chrlist.index(chr)+1)+' of '+str(len(chrlist))+')'
+        print ''
+        print 'replicate: '+str(counter)+' of '+str(num_reps)+' (chr '+str(chrlist.index(chr)+1)+' of '+str(len(chrlist))+')'
         #print 'output file: '+out_dir+scriptname+'.'+output_label+'.'+timenow+'.out'
         print 'working on '+input_chromosome_file[chr]+' ...'
         
 
-        # this is initiated here so that it can be passed to update_individuals_from1000g() even if it's empty
+        # these are initiated here so that it can be passed to update_individuals_from1000g() even if it's empty
         pileup_positions = {}   # pileup_positions[pos] = [[basequal1, basequal2, ...], [basequal1, basequal2, ...] ]
-
+        target_positions = {}
+        
 
         # read base qualities from pileup file if using a pileup file for input
         if qualities_pileup_filename != '':
@@ -716,12 +805,15 @@ for counter in range(1, num_reps+1):
                                 
         # perform pedigree reproductions 
         print '    performing reproductions ...'
-        child1[chr]     = mfp.repro(father[chr], mother[chr],   recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
-        child2[chr]     = mfp.repro(father[chr], mother[chr],   recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
-        gchild[chr]     = mfp.repro(child1[chr], wife[chr],     recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
-        cousin[chr]     = mfp.repro(child2[chr], husband[chr],  recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
-        inbred[chr]     = mfp.repro(child1[chr], child2[chr],   recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs) # offspring of siblings
-        halfsib[chr]    = mfp.repro(child1[chr], stepmom[chr],  recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
+        for r in range(0, len(relationships)):
+            indiv_vars[individuals.index(relationships[r][0])][chr] =  mfp.repro(indiv_vars[individuals.index(relationships[r][1])][chr], indiv_vars[individuals.index(relationships[r][2])][chr], recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)            
+
+        #child1[chr]     = mfp.repro(father[chr], mother[chr],   recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
+        #child2[chr]     = mfp.repro(father[chr], mother[chr],   recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
+        #gchild[chr]     = mfp.repro(child1[chr], wife[chr],     recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
+        #cousin[chr]     = mfp.repro(child2[chr], husband[chr],  recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
+        #inbred[chr]     = mfp.repro(child1[chr], child2[chr],   recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs) # offspring of siblings
+        #halfsib[chr]    = mfp.repro(child1[chr], stepmom[chr],  recomb_rate, chromosome_map, chrom_length[chr], newIDs.pop(), recomb_rate_regions, recomb_probs)
 
         
         # calculate/write pairwise differences in order of increasing genetic distance
@@ -735,9 +827,18 @@ for counter in range(1, num_reps+1):
                 
                 # open results and calculations output files, without buffer, for write/append
                 openOutputFiles()
-                
-                
+
                 # get estimates of pairwise distance
+                for c in range(0, len(comparisons)):                
+                    if qualities_pileup_filename == '':
+                        pwdiffsresults = mfp.pairwise_diff(indiv_vars[individuals.index(comparisons[c][1])][chr], indiv_vars[individuals.index(comparisons[c][2])][chr], mean_coverage[param_set][0][rep], mean_coverage[param_set][1][rep], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, chromosome_map)
+                    else:
+                        pwdiffsresults = mfp.pileup_PWD(indiv_vars[individuals.index(comparisons[c][1])][chr], indiv_vars[individuals.index(comparisons[c][2])][chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
+                    pw_sum = pwdiffsresults[1]
+                    writePWDtoFiles(labels.index(comparisons[c][0]))
+                    #writePWDtoFiles(labels.index(comparisons[c][0].strip('"')))
+                
+                """
                 # IDENTICAL RELATIONSHIP [self-comparison of an offspring of siblings]
                 if qualities_pileup_filename == '':
                     pwdiffsresults = mfp.pairwise_diff(inbred[chr], inbred[chr], mean_coverage[param_set][0][rep], mean_coverage[param_set][1][rep], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, chromosome_map)
@@ -809,6 +910,7 @@ for counter in range(1, num_reps+1):
                     pwdiffsresults = mfp.pileup_PWD(father[chr], mother[chr], contam_rate[param_set][0][rep], contam_rate[param_set][1][rep], seq_errorrate[param_set][0][rep], seq_errorrate[param_set][1][rep], contam_pop_AF, pedigree_pop_AF, pos_rev_lookup, pileup_positions, verbose)
                 pw_sum = pwdiffsresults[1]
                 writePWDtoFiles(labels.index('father-mother'))        
+                """
 
                 # write labels to .labels file 
                 for t in range(len(labels)):
