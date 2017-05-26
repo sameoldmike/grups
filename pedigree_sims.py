@@ -1,34 +1,3 @@
-"""
-usage: python   pedigree_sims.py    
-                #shuffle=0|1                             do (1) or do not (0) shuffle random individual choices between reps
-                chr=int,int-int,... 
-                ds_rate=float                           fraction of SNPs to keep at real frequency [i.e. NOT change to 0% frequency]
-                c_rate=float,float/float,float ... | float-float,float-float/float-float,float-float ...
-                [mean_cov=float,float/float,float ... | float-float,float-float/float-float,float-float ...]   
-                [q_rate=float,float/float,float ... | float-float,float-float/float-float,float-float ...]  
-                label=str/str ...           
-                data_dir=path/                          
-                recomb_dir=path/
-                reps=int
-                chr_type=whole|trunc
-                include=all|poly|mono
-                out=path
-                [targets=file.txt] 
-                [min_qual=float]    
-                [pileup=path.gz]                                                      
-                [verbose]
-                [self_comparison]
-                [min_AF=float]                          min allele frequency in pedigree superpopulation for SNP to be included in simulations     
-                [pedigree_pop=str]                      string (EAS|AMR|AFR|EUR|SAS) identifying superpopulation with which to perform pedigree simulations
-                [contam_pop=str,str]                    strings (EAS|AMR|AFR|EUR|SAS) identifying superpopulation with which to contaminate pedigree simulations
-                [ds_rate_numSNPs=float]                 fraction of filtered SNPs include in the analysis
-                [contam_numind=int,int]                 numbers of random individual genomes with which to contaminate pedigree simulations [or have it choose randomly from pop]
-                [paramNumReps=int | int,int,int ...]    number of replicates to perform drawing from specified ranges for parameters c_rate, mean_cov, q_rate  
-"""
-
-
-
-
 
 # define functions
 def writePWDtoFiles(relationship_index):
@@ -120,7 +89,7 @@ import os.path
 import datetime
 import pysam
 import random
-import code #code.interact(local=locals())
+#import code #code.interact(local=locals())
 import gzip
 import numpy as np
 import math
@@ -176,7 +145,7 @@ parser.add_argument('--chr', type=str, help="which chromosome(s) to include in t
 parser.add_argument('--verbose', type=str, help="turn on verbose output mode, e.g. for debugging [default: off]")                                            
 parser.add_argument('--self_comparison', type=str, help="turn on self-comparison mode (only used when an input pileup file is defined) [default: off]")                                           
 parser.add_argument('--out', type=str, help="path to directory for output [default: working directory]") 
-parser.add_argument('--targets', type=str, help="path to file defining target genomic positions")   # include an example file with scripts
+parser.add_argument('--targets', type=str, help="path to file defining target genomic positions")
 parser.add_argument('--contam_numind', type=str, help="numbers of random individual genomes with which to contaminate pedigree simulations. format: INT,INT. [default: contaminate with population allele frequencies]")   
 #parser.add_argument('--writeAllData', type=str, help="")   
 
@@ -529,6 +498,7 @@ for param_set in range(len(output_label)):
 # ==========================================================================================================================================
 # HASH IN BED-LIKE TARGET SNP POSITIONS FILE (W/ ALT/REF ALLELE INFO IF INCLUDED)
 # ==========================================================================================================================================
+use_target_positions = 0
 if targets_file != '':
     if verbose == 1:
         print 'hashing list of target positions'
@@ -546,6 +516,7 @@ if targets_file != '':
     if verbose == 1:
         print '    # target positions hashed:\t'+str(len(target_positions.keys()))
     input_file.close()
+    use_target_positions = 1
 
 
 
@@ -731,6 +702,8 @@ for counter in range(1, num_reps+1):
                                                                                                           popAF_polymorph_filter,               \
                                                                                                           pileup_positions,                     \
                                                                                                           use_pileup_positions,                 \
+                                                                                                          target_positions,                     \
+                                                                                                          use_target_positions,                 \
                                                                                                           pedigree_pop,                         \
                                                                                                           contam_pop,                           \
                                                                                                           [contam0_ind_IDs, contam1_ind_IDs],   \

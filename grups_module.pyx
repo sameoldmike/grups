@@ -162,21 +162,9 @@ class Individual:
 
 
 # define functions
-def update_individuals_from1000g(chr, name, sizeChrom, numvars, colInDatafile, listindiv, downsample_rate_variation, downsample_rate_numSNPs, pedigree_pop_ID_index, popAF_polymorph_filter, pileup_positions, use_pileup_positions, pedigree_pop, contam_pop, contam_ind_IDs, min_AF):
+def update_individuals_from1000g(chr, name, sizeChrom, numvars, colInDatafile, listindiv, downsample_rate_variation, downsample_rate_numSNPs, pedigree_pop_ID_index, popAF_polymorph_filter, pileup_positions, use_pileup_positions, target_positions, use_target_positions, pedigree_pop, contam_pop, contam_ind_IDs, min_AF):
     """
-    Update a list of objects of class Individual with genotype data from datafile 'name'
-    (format type: vcf, eg 1000genomes)
-    
-    Argument:
-    name                name of inputfile containing genotypes
-    sizeChrom           size of the complete chromosome
-    numvars             number of variants in chromosome
-    colInDatafile       list of column indexes from which to extract the genotype data. 1 index per individual
-    listindiv           list of objects of class Individual
-    downsample_rate_variation     fraction of total number of SNPs should be kept [1.0 = do not filter, .10 = keep 10% of SNPs]
-    
-    pedigree_pop        string identifying the superpopulation with which to perform pedigree simulations [EAS | AMR | AFR | EUR | SAS]
-    contam_pop          list of two strings identifying the superpopulation with which to contaminate pedigree simulations [EAS | AMR | AFR | EUR | SAS]
+    Update a list of objects of class Individual with genotype data from datafile 'name' (format type: vcf, eg 1000genomes)
     """
     
     nind = len(listindiv)
@@ -209,11 +197,15 @@ def update_individuals_from1000g(chr, name, sizeChrom, numvars, colInDatafile, l
         # perform initial filtering of variants
         include_SNP = 1
         
-        # if a pileup file with target positions has been provided
+        # if a pileup and/or targets file with target positions has been provided [target positions file may contain a subset of pileup positions, but a position must be in both lists to be included]
         if use_pileup_positions == 1:
-            # check if this BAM position is in the pileup targets
+            # check if this BAM position is in the list of pileup targets
             if int(elem[1])-1 not in pileup_positions:
                 # immediately filter out this position
+                include_SNP = 0
+        if use_target_positions == 1:
+            # check if this BAM position is in the list of targets positions 
+            if int(elem[1])-1 not in target_positions:
                 include_SNP = 0
 
         # perform normal filtering on this position if it's not already filtered out
@@ -349,10 +341,6 @@ def update_individuals_from1000g(chr, name, sizeChrom, numvars, colInDatafile, l
                 #print 'elem[colInDatafile[ind]][0] =', elem[colInDatafile[ind]][0]
                 #print 'elem[colInDatafile[ind]][2] =', elem[colInDatafile[ind]][2]
                 #print '---'
-        
-                # update the chromosome position lookup and reverse-lookup dictionaries [moved this outside this for loop because it repeated same operation nind times]
-                #pos_lookup[pos_vector_length] = pos_on_chromosome
-                #pos_rev_lookup[pos_on_chromosome] = pos_vector_length
                 
                 if dsSNP == 0:
                     # read this individuals' haps and save sequence data
@@ -361,7 +349,6 @@ def update_individuals_from1000g(chr, name, sizeChrom, numvars, colInDatafile, l
                 else:
                     haplo1[ind][pos_vector_length] = 0
                     haplo2[ind][pos_vector_length] = 0
-
                 #print 'allele1, allele2 =', elem[colInDatafile[ind]][0], elem[colInDatafile[ind]][2]
                     
             # increment length of position vector

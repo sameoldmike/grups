@@ -6,7 +6,7 @@ usage: python PWD_from_stdin.py min_qual=int
                                 [min_depth=1,2] 
                                 [known_variants]            # only count/allow bases that match a list of known REF/ALT alleles for each position
                                 [samples=0,1] 
-                                [bed=file.bed] 
+                                [targets=file.txt] 
                                 [chr=int-int,int ...] 
                                 [lines=int] 
                                 [self_comparison] 
@@ -28,7 +28,7 @@ import gzip
 from random import choice
 import csv
 import random
-#import fileinput
+import argparse
 
 
 
@@ -72,88 +72,137 @@ min_depth = [0, 1]
 known_variants = 0
 min_qual = 0
 samples = [0, 1]        # which samples to compare. default to pairwise comparison of both samples, but could be either sample against itself
-bed_file = ''         
+targets_file = ''         
 lines = 1000000
 filter_sites = 0
 ignore_dels = 0           
 block_JK = 0            # block jack-knife mode ON/OFF
 blocksize = 10000000
-for this_arg in sys.argv[1:]:
-    #print this_arg
-    if this_arg.find('verbose') != -1:
-        verbose = 1
-        #print 'verbose = 1'
-    elif this_arg.find('quiet') != -1:
-        quiet = 1   
-        #print 'quiet = 1'
-    elif this_arg.find('self_comparison') != -1:
-        self_comparison = 1
-        #print 'self_comparison = 1'
-    elif this_arg.find('known_variants') != -1:
-        known_variants = 1
-    elif this_arg.find('filter_sites') != -1:
-        filter_sites = 1
-    elif this_arg.find('ignore_dels') != -1:
-        ignore_dels = 1
-    elif this_arg.find('block_JK') != -1:
-        block_JK = 1        
-    elif this_arg.find('blocksize=') != -1:
-        cmd_arg = 'blocksize='  
-        blocksize = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('min_depth=') != -1:
-        cmd_arg = 'min_depth='  
-        min_depth = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)].split(',')
-        min_depth[0] = int(min_depth[0])
-        min_depth[1] = int(min_depth[1])
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('min_qual=') != -1:
-        cmd_arg = 'min_qual='  
-        min_qual = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('samples=') != -1:
-        cmd_arg = 'samples='  
-        samples = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)].split(',')
-        samples[0] = int(samples[0])
-        samples[1] = int(samples[1])
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('lines=') != -1:
-        cmd_arg = 'lines='  
-        lines = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]    
-    elif this_arg.find('bed=') != -1:
-        cmd_arg = 'bed='  
-        bed_file = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-    elif this_arg.find('pileup=') != -1:
-        cmd_arg = 'pileup='  
-        filename = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        #if filename == '':
-        #    print 'reading pileup data from stdin'
-        #else:
-        #    print 'reading pileup data from',filename
-    elif this_arg.find('chr=') != -1:                                                   
-        cmd_arg = 'chr='
-        chrlist = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
-        chrlist = chrlist.split(',')
-        new_chr = []
-        for x in chrlist:
-            x = x.split('-')
-            if len(x) == 1:
-                new_chr.append(int(x[0]))
-            elif len(x) == 2:
-                for z in range(int(x[0]), int(x[1])+1):
-                    new_chr.append(z)
-            else:
-                print 'error parsing chr= statement'
-        #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]              
-        #print 'target contigs: ', new_chr
-        chrlist = new_chr
-        #chrlist = [x-1 for x in new_chr]
-        #random.shuffle(chrlist)
-    else:
-        print 'ERROR parsing command-line argument', this_arg
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--verbose", type=str, help="")
+parser.add_argument("--quiet", type=str, help="")
+parser.add_argument("--self_comparison", type=str, help="")
+parser.add_argument("--known_variants", type=str, help="")
+parser.add_argument("--filter_sites", type=str, help="")
+parser.add_argument("--ignore_dels", type=str, help="")
+parser.add_argument("--min_depth", type=str, help="")
+parser.add_argument("--min_qual", type=str, help="")
+parser.add_argument("--samples", type=str, help="")
+parser.add_argument("--lines", type=str, help="")
+parser.add_argument("--targets", type=str, help="")
+parser.add_argument("--pileup", type=str, help="")
+parser.add_argument("--chr", type=str, help="")
+
+if args.verbose:                                          
+    verbose = 1
+if args.quiet:   
+    quiet = 1                                       
+if args.self_comparison:
+    self_comparison = 1
+if args.known_variants:
+    known_variants = 1
+if args.filter_sites:
+    filter_sites = 1
+if args.ignore_dels:
+    ignore_dels = 1
+if args.min_depth:
+    min_depth = args.min_depth.split(',')
+    min_depth[0] = int(min_depth[0])
+    min_depth[1] = int(min_depth[1])
+if args.min_qual:
+    min_qual = int(args.min_qual)
+if args.samples:
+    samples = args.samples.split(',')
+    samples[0] = int(samples[0])
+    samples[1] = int(samples[1])
+if args.lines:
+    lines = int(args.lines)
+if args.targets:
+    targets_file = args.targets
+if args.pileup:
+    filename = args.pileup
+if args.chr:
+    chrlist = args.chr
+    chrlist = chrlist.split(',')
+    new_chr = []
+    for x in chrlist:
+        x = x.split('-')
+        if len(x) == 1:
+            new_chr.append(int(x[0]))
+        elif len(x) == 2:
+            for z in range(int(x[0]), int(x[1])+1):
+                new_chr.append(z)
+        else:
+            print 'error parsing chr= statement'
+    chrlist = new_chr
+
+
+# for this_arg in sys.argv[1:]:
+#     #print this_arg
+#     if this_arg.find('verbose') != -1:
+#         verbose = 1
+#         #print 'verbose = 1'
+#     elif this_arg.find('quiet') != -1:
+#         quiet = 1   
+#         #print 'quiet = 1'
+#     elif this_arg.find('self_comparison') != -1:
+#         self_comparison = 1
+#         #print 'self_comparison = 1'
+#     elif this_arg.find('known_variants') != -1:
+#         known_variants = 1
+#     elif this_arg.find('filter_sites') != -1:
+#         filter_sites = 1
+#     elif this_arg.find('ignore_dels') != -1:
+#         ignore_dels = 1
+#     #elif this_arg.find('block_JK') != -1:
+#     #    block_JK = 1        
+#     #elif this_arg.find('blocksize=') != -1:
+#     #    cmd_arg = 'blocksize='  
+#     #    blocksize = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
+#     elif this_arg.find('min_depth=') != -1:
+#         cmd_arg = 'min_depth='  
+#         min_depth = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)].split(',')
+#         min_depth[0] = int(min_depth[0])
+#         min_depth[1] = int(min_depth[1])
+#     elif this_arg.find('min_qual=') != -1:
+#         cmd_arg = 'min_qual='  
+#         min_qual = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
+#     elif this_arg.find('samples=') != -1:
+#         cmd_arg = 'samples='  
+#         samples = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)].split(',')
+#         samples[0] = int(samples[0])
+#         samples[1] = int(samples[1])
+#     elif this_arg.find('lines=') != -1:
+#         cmd_arg = 'lines='  
+#         lines = int(this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)])
+#     elif this_arg.find('targets=') != -1:
+#         cmd_arg = 'targets='  
+#         targets_file = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
+#     elif this_arg.find('pileup=') != -1:
+#         cmd_arg = 'pileup='  
+#         filename = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
+#     elif this_arg.find('chr=') != -1:                                                   
+#         cmd_arg = 'chr='
+#         chrlist = this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]
+#         chrlist = chrlist.split(',')
+#         new_chr = []
+#         for x in chrlist:
+#             x = x.split('-')
+#             if len(x) == 1:
+#                 new_chr.append(int(x[0]))
+#             elif len(x) == 2:
+#                 for z in range(int(x[0]), int(x[1])+1):
+#                     new_chr.append(z)
+#             else:
+#                 print 'error parsing chr= statement'
+#         #print cmd_arg+this_arg[(this_arg.find(cmd_arg)+len(cmd_arg)):len(this_arg)]              
+#         #print 'target contigs: ', new_chr
+#         chrlist = new_chr
+#         #chrlist = [x-1 for x in new_chr]
+#         #random.shuffle(chrlist)
+#     else:
+#         print 'ERROR parsing command-line argument', this_arg
 
 
 
@@ -161,12 +210,12 @@ for this_arg in sys.argv[1:]:
 # ==========================================================================================================================================
 # HASH IN TARGET SNP POSITIONS FILE (W/ ALT/REF ALLELE INFO IF INCLUDED)
 # ==========================================================================================================================================
-if bed_file != '':
+if targets_file != '':
     if verbose == 1:
         print 'hashing list of target positions'
 
     target_positions = {}
-    input_file = open(bed_file, "rU")
+    input_file = open(targets_file, "rU")
     read_data = csv.reader(input_file, dialect=csv.excel_tab, lineterminator='\n', quoting=csv.QUOTE_NONE)
     for row in read_data:
         if len(row) == 2:
@@ -269,7 +318,7 @@ for line in sys.stdin:
             if int(row[0]) in chrlist:
                 skip_site = 0
                 # if a target positions list was provided
-                if bed_file != '':
+                if targets_file != '':
                     # check if site is in target positions list
                     if row[0]+'_'+row[1] in target_positions:
                         skip_site = 0
