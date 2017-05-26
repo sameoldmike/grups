@@ -68,21 +68,22 @@
             --pileup ../1000g_v3_BAMs/pairwise_pileups_simspecific/NA20526.rmdup_NA20792.rmdup.PWD_from_stdin_2015-06-05.py.only_targets.only_SNPs.min_depth2_2.pileup.gz 
             --out /path/to/simulations_output/ 
             --ds_rate 1.0 
-            --c_rate 0.0,0.0 
+            --c_rate 0.0,0.0
             --q_rate 0.0,0.0 
-            --reps 1 
+            --reps 1
             --chr 1-22 
             --include all 
             --min_qual 30 
             --data_dir /path/to/1000g_data/
             --pedigree_pop EUR 
-            --contam_pop EUR,EUR 
+            --contam_pop AFR,AFR 
             --recomb_dir ./recombination_maps/
     
     5d. Concatenate and plot simulation statistics
         5d1. bash pedigree_sims_concat.sh Troc1rmdup_Troc3rmdup_pileup ../analyses/pedigree_sims/2016-11-11_Haaketal_mindepth1_onlyTv_ds1.0_c0_q0/ ConcatenatedReps/
         5d2. Rscript plot_pedigree_sims.R data_dir=../analyses/pedigree_sims/2016-11-11_Haaketal_mindepth1_onlyTv_ds1.0_c0_q0/ConcatenatedReps/ regex=*Troc1rmdup_Troc3rmdup_pileup.out range=1.5 violin plotval=0.225893,0.00122087 w=6 h=6 noPrint=1,3,6,7
-
+            # PLOTTING STILL NEEDS TO BE DEFINED BY PEDIGREE DEFINITION FILE
+    
     5e. Simulate pairwise genetic distances within a pedigree of randomly chosen individuals, with genetic distance calculations 
         at all genomic positions contained in the pileup file that meet the read depth/quality criteria.
         python pedigree_sims.py 
@@ -107,29 +108,3 @@
     For more information check: github.com/sameoldmike/grups/. To report issues, contact Mike Martin: mike.martin@ntnu.no. 
     When reporting issues, please be as specific as possible regarding software environment, version numbers, and output. 
 
-
-
-
-
-TEST COMMANDS
-    python pedigree_sims.py 
---label NA20526rmdup_NA20792rmdup_pileup 
---ped example_pedigree.txt
---pileup ../1000g_v3_BAMs/pairwise_pileups_simspecific/NA20526.rmdup_NA20792.rmdup.PWD_from_stdin_2015-06-05.py.only_targets.only_SNPs.min_depth2_2.pileup.gz 
---out /path/to/simulations_output/ 
---ds_rate 1.0 
---c_rate 0.0,0.0 
---q_rate 0.0,0.0 
---reps 1 
---chr 1-22 
---include all 
---min_qual 30 
---data_dir /path/to/1000g_data/
---pedigree_pop EUR 
---contam_pop EUR,EUR 
---recomb_dir /home/people/michmar/humans/analyses/recombination_maps/
-
-
-
-
-python ./pedigree_sims.py --label Troc1rmdup_Troc3rmdup_pileup --ped example_pedigree.txt --pileup /home/people/michmar/humans/Haaketal2015_data/pairwise_pileups_simspecific/Troc1_MDR_Troc3_MDR.PWD_from_stdin_2015-06-05.py.only_targets2.only_SNPs.only_transversions.min_depth2_2.pileup.gz --out ./ --ds_rate 1.0 --c_rate 0.0,0.0 --q_rate 0.0,0.0 --reps 1 --chr 21,22 --include all --min_qual 30 --data_dir /home/people/michmar/humans/1000genomes_v3_data_EURonly/ --pedigree_pop EUR --contam_pop EUR,EUR --recomb_dir /home/people/michmar/humans/analyses/recombination_maps/
