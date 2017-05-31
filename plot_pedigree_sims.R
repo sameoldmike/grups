@@ -1,9 +1,4 @@
 
-# R code to plot pairwise difference results of pedigree simulations
-# Mike Martin 
-# 2015-04-23
-
-
 # usage:  Rscript scriptname.R 
 #             data_dir=path/ 
 #             regex=str 
@@ -12,11 +7,7 @@
 #             [plotdist=path/regex]         # ex: plotdist=./analyses/block_jackknife/PWD_from_stdin_2015-09-22.py.only_targets2.only_SNPs.only_transversions.mindepth2_2.ESP2MDR.ESP29MDR.blocksize10M.*.out
 #             [label=str] 
 #             [range=float]         [1.5]
-#             [doPlotExp] 
-#             [doPlotMeanVar]
-#             [violin] 
 #             [alpha=float]         [0.01]
-#             [doHists=0|1]
 #             [noPrint=int]                 # index of the relationship not to print (e.g. 1 for inbred-inbred relationship)
 #             [w=float]                     # plot width
 #             [h=float]                     # plot height
@@ -26,7 +17,6 @@
 #             [maxSample=int]       [inf]
 #             [printAllReps]                # print the mean genetic distance for every replicate to the screen
 #
-# ex:     Rscript plot_pedigree_sims.2015-04-23.R /emc/data/sameoldmike/humans/scripts/pedigree_sims_Motala.2015-04-15.py_concatenated_reps/ *PileupSims_Vindija16_Vindija25.out max=0.0006 min=0.001 plotval=0.001 range=1.5
 
 
 #library(perm)
@@ -43,15 +33,12 @@ plotmin = -1
 plotval = -1
 plotval_std = -1
 plotdist = ''
-doPlotExp = 0
-doPlotMeanVar = 0
 label = '.'
 range = 0
-violin = 0
-boxplot_border_color = "black"
-boxplot_filled_color = "lightgray"
+violin = 1
+boxplot_border_color = "white"
+boxplot_filled_color = "white"
 alpha = 0.01
-doHists = 0
 noPrint = -1
 w = 5 
 h = 5
@@ -115,19 +102,8 @@ for (i in seq(1, length(args))){
         h = as.numeric(t[[1]][2])
     } else if (t[[1]][1] == 'alpha'){
         alpha = as.numeric(t[[1]][2])
-    } else if (t[[1]][1] == 'doPlotExp'){
-        doPlotExp = 1
-    } else if (t[[1]][1] == 'doPlotMeanVar'){
-        doPlotMeanVar = 1
-    } else if (t[[1]][1] == 'violin'){
-        #library(vioplot)
-        violin = 1
-        boxplot_border_color = "white"
-        boxplot_filled_color = "white"
     } else if (t[[1]][1] == 'label'){
         label = paste('.', t[[1]][2], '.', sep="")
-    } else if (t[[1]][1] == 'doHists'){
-        doHists = 1
     } else if (t[[1]][1] == 'heatMap'){
         heatMap = 1
         library(gplots)
@@ -157,16 +133,6 @@ for (gg in seq(1, length(all_files))){
     data                = read.table(file=paste(filename_base, ".out", sep=''), header=F)
     cat(paste('reading ', filename_base, ".numvars\n", sep=''))
     data_numvars        = read.table(file=paste(filename_base, ".numvars", sep=''), header=F)
-    cat(paste('reading ', filename_base, ".pwexp\n", sep=''))
-    data_pwexp          = read.table(file=paste(filename_base, ".pwexp", sep=''), header=F)
-    cat(paste('reading ', filename_base, ".pwexp_sibs\n", sep=''))
-    data_pwexp_sibs     = read.table(file=paste(filename_base, ".pwexp_sibs", sep=''), header=F)
-    cat(paste('reading ', filename_base, ".pwexp_gpgc\n", sep=''))
-    data_pwexp_gpgc     = read.table(file=paste(filename_base, ".pwexp_gpgc", sep=''), header=F)
-    cat(paste('reading ', filename_base, ".pwexp_twins\n", sep=''))
-    data_pwexp_twins    = read.table(file=paste(filename_base, ".pwexp_twins", sep=''), header=F)
-    cat(paste('reading ', filename_base, ".pwexp_fcous\n", sep=''))
-    data_pwexp_fcous    = read.table(file=paste(filename_base, ".pwexp_fcous", sep=''), header=F)
     cat(paste('reading ', filename_base, ".numSNPscov\n", sep=''))
     data_SNPscov        = read.table(file=paste(filename_base, ".numSNPscov", sep=''), header=F)
     cat(paste('reading ', filename_base, ".labels\n", sep=''))
@@ -186,7 +152,6 @@ for (gg in seq(1, length(all_files))){
     }
     
     label = paste(label, 'reps', to_sample, sep = '')
-    if (violin == 1){label = paste(label, '.violin', sep = '')}
     label = paste(label, '.w', w, '.h', h, '.', sep='')
     
 
@@ -216,12 +181,10 @@ for (gg in seq(1, length(all_files))){
                 chrom = 1   
                 sums = 0
                 sums_SNPscov = 0
-                sums_pwdiffs = 0
                 sums_numvars = 0
                 sum_length = 0
                 for (element in seq(blockstart, blockstart+21)){
                     sums          = sums         + (data[element,relationship])
-                    sums_pwdiffs  = sums_pwdiffs + (data_pwexp[element,relationship])
                     sums_SNPscov  = sums_SNPscov + data_SNPscov[element,relationship]
                     sums_numvars  = sums_numvars + data_numvars[element,relationship]
                     sum_length = sum_length + 1
@@ -230,101 +193,31 @@ for (gg in seq(1, length(all_files))){
                 data2[rep,relationship]                 = sums / sums_SNPscov
                 sums_keeper[rep,relationship]           = sums
                 sums_SNPscov_keeper[rep,relationship]   = sums_SNPscov
-                #print(paste(c('PWDs:', sums, '  overlaps:', sums_SNPscov)))
-                #print(paste(c('rep:', rep, '  relationship:', relationship, '  PWDs:', sums, '  overlaps:', sums_SNPscov), sep=''))
-                #pwdiff_expectations[rep,relationship] = sums_pwdiffs / sums_SNPscov
             }
             rep = rep + 1
         }
-        #print(pwdiff_expectations)
     
         
     
         # parse labels, define relationships and printing order
         labels = as.matrix(data_labels[1,])
         print(paste("parsed sims label:", labels, sep=" "))
-        potential_labels_1 = t(as.matrix(c("father-mother", "father-child1", "child1-child2", "child2-gchild", "cousin-gchild", "father-father", "mother-cousin")))
-        potential_labels_2 = t(as.matrix(c("father-father", "father-child1", "child1-child2", "mother-cousin", "child2-gchild", "cousin-gchild", "father-mother")))
-        potential_labels_3 = t(as.matrix(c("inbred-inbred", "father-father", "father-child1", "child1-child2", "mother-cousin", "child2-gchild", "cousin-gchild", "father-mother")))
         potential_labels_4 = t(as.matrix(c("inbred-inbred", "father-father", "father-child1", "child1-child2", "mother-cousin", "child2-gchild", "gchild-halfsib", "cousin-gchild", "father-mother")))
         labels_relationships = -1
         
-        if (length(labels) == length(potential_labels_1)){
-            if (all(labels == potential_labels_1)){
-                labels_printorder = c(6, 2, 3, 4, 7, 5, 1)            
-                labels_relationships = c('unrelated', 'parent-child', 'siblings', 'uncle-nephew', 'cousins', 'twins', 'gparent-gchild')
-                cbPalette <- c("#D55E00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7", "#0072B2", "#E69F00")                
-                labels_relationshipsTOPLOT = labels_relationships
-                labels_printorderTOPLOT = labels_printorder
-                if (noPrint != -1){
-                    labels_relationshipsTOPLOT = labels_relationships[-labels_printorder[noPrint]]
-                    labels_printorderTOPLOT = labels_printorder[-noPrint]
-                } 
-            }
-        }
-        if (length(labels) == length(potential_labels_2)){
-            if (all(labels == potential_labels_2)){
-                labels_printorder = c(1, 2, 3, 4, 5, 6, 7)
-                labels_relationships = c('twins', 'parent-child', 'siblings', 'gparent-gchild', 'uncle-nephew', 'cousins', 'unrelated')
-                cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-                labels_relationshipsTOPLOT = labels_relationships
-                labels_printorderTOPLOT = labels_printorder
-                if (noPrint != -1){
-                    labels_relationshipsTOPLOT = labels_relationships[-labels_printorder[noPrint]]
-                    labels_printorderTOPLOT = labels_printorder[-noPrint]
-                } 
-            }
-        }
-        if (length(labels) == length(potential_labels_3)){
-            if (all(labels == potential_labels_3)){
-                labels_printorder = c(1, 2, 3, 4, 5, 6, 7, 8)
-                labels_relationships = c('inbred_twins', 'twins', 'parent-child', 'siblings', 'gparent-gchild', 'uncle-nephew', 'cousins', 'unrelated')
-                cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-                labels_relationshipsTOPLOT = labels_relationships
-                labels_printorderTOPLOT = labels_printorder
-                if (noPrint != -1){
-                    labels_relationshipsTOPLOT = labels_relationships[-labels_printorder[noPrint]]
-                    labels_printorderTOPLOT = labels_printorder[-noPrint]
-                } 
-            }
-        }
-        if (length(labels) == length(potential_labels_4)){
-            if (all(labels == potential_labels_4)){
-                labels_printorder = c(1, 2, 3, 4, 5, 6, 7, 8, 9)
-                labels_relationships = c('inbred_twins', 'twins', 'parent-child', 'siblings', 'gparent-gchild', 'uncle-nephew', 'halfsibs', 'cousins', 'unrelated')
-                cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "white", "#D55E00", "#CC79A7", "black")
-                labels_relationshipsTOPLOT = labels_relationships
-                labels_printorderTOPLOT = labels_printorder
-                if (noPrint != -1){
-                    #labels_relationshipsTOPLOT = labels_relationships[-labels_printorder[noPrint]]
-                    #labels_relationshipsTOPLOT = labels_relationships[-noPrint]
-                    labels_printorderTOPLOT = labels_printorder[-noPrint]
-                    # must now refer to labels_relationshipsTOPLOT[labels_printorderTOPLOT] for plot labels
-                } 
-                # make lists of relationships with same expected value, in order to choose the one with max variance
-                equal_R_rels_1 = c('parent-child', 'siblings')
-                equal_R_rels_1 = c('gparent-gchild', 'uncle-nephew', 'halfsibs')
-            }
-        }
-        if (length(labels_relationships) == 1){
-            cat('Error! Simulation labels are unrecognized ...\n')
-        }
+        labels_printorder = seq(1, length(labels))
+        labels_relationships = data_labels
+        cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "white", "#D55E00", "#CC79A7", "black") # need to handle different label lengths
+        labels_relationshipsTOPLOT = labels_relationships
+        labels_printorderTOPLOT = labels_printorder
+        if (noPrint != -1){
+            labels_printorderTOPLOT = labels_printorder[-noPrint]
+        } 
         print(paste("assigned rels label:", labels_relationships, sep=" "))
         print(paste("TOPLOT rels label:", labels_relationshipsTOPLOT[labels_printorderTOPLOT], sep=" "))
     
 
-        #labels_printorder = c(6, 2, 3, 4, 7, 5, 1)
-        #labels_printorder = c(1, 2, 3, 4, 5, 6, 7, 8)
-        #print(labels)
-        #labels_relationships = c('twins', 'parent-child', 'siblings', 'gparent-gchild', 'uncle-nephew', 'cousins', 'unrelated')
-        #labels_relationships = c('inbred_twins', 'twins', 'parent-child', 'siblings', 'gparent-gchild', 'uncle-nephew', 'cousins', 'unrelated')
-        #labels_relationships_printorder = c(1, 2, 3, 4, 5, 6, 7, 8)
-        #labels_relationships_REVERSEprintorder = c(7, 2, 3, 4, 6, 1, 5)
-        #print (labels_relationships)
-        #ordered_relationships = labels_relationships[labels_relationships_printorder]
-
-        
-
+    
         # print some stats for comparison with observed data
         colMeans_sums_keeper            = colMeans(sums_keeper)
         colMeans_sums_SNPscov_keeper    = colMeans(sums_SNPscov_keeper)
@@ -351,44 +244,6 @@ for (gg in seq(1, length(all_files))){
             print(data2)
         }
         
-        # calculate "ABC-like" probability of each relationship given the observation
-        # if (plotval != -1){
-        #     cat(paste("window size =", window_size, sep="\t"))
-        #     cat(paste("Relationship", "#reps_in_obs_window", sep="\t"))
-        #     rel_sims_window = matrix(nrow=length(labels_relationships), ncol=1)
-        #     for (t in seq(1, length(labels_relationships))){
-        #         rel_sims_window[t] = length(data2[(data2[,t] >= plotval-window_size && data2[,t] <= plotval+window_size),t])
-        #         #if (rel_sims_window[t] > 0){
-        #         #    print(data2[(data2[,t] >= plotval-window_size && data2[,t] <= plotval+window_size),t])
-        #         #}
-        #         cat(paste(labels_relationships[t], rel_sims_window[t], sep="\t"))
-        #     }
-        # }
-
-        
-        
-        # calculate z-scores and p-values
-        # zetas_matrix = matrix(nrow=length(labels_relationships), ncol=length(labels_relationships))
-        # colnames(zetas_matrix) <- labels_relationships[labels_relationships_REVERSEprintorder]
-        # rownames(zetas_matrix) <- labels_relationships[labels_relationships_REVERSEprintorder]
-        # pvals_matrix = matrix(nrow=length(labels_relationships), ncol=length(labels_relationships))
-        # colnames(pvals_matrix) <- labels_relationships[labels_relationships_REVERSEprintorder]
-        # rownames(pvals_matrix) <- labels_relationships[labels_relationships_REVERSEprintorder]
-        # for (X in seq(1:length(labels_relationships)-1)){
-        #     for (Y in seq(2:length(labels_relationships))){
-        #         if (X != Y){
-        #             zeta = (mean(data2[,X]) - mean(data2[,Y])) / (sqrt((var(data2[,X])/length(data2[,X])) + (var(data2[,Y])/length(data2[,Y]))))
-        #             zetas_matrix[X,Y] = zeta
-        #             pvals_matrix[X,Y] = pvalue2sided=2*pnorm(-abs(zeta))
-        #         }
-        #     }
-        # }
-        # print(zetas_matrix)
-        # print(pvals_matrix)
-        # print(paste("Can relationship can be discriminated at alpha = ", alpha, "?", sep = ""))
-        # print(pvals_matrix < 0.01)
-
-
 
         # calculate Bhattacharyya coefficient for each pair of relationships
         cat("\n")
@@ -412,7 +267,6 @@ for (gg in seq(1, length(all_files))){
                 for (i in seq(1, numBCbins)){
                     BC_matrix[X,Y] = BC_matrix[X,Y] + sqrt(histXPr[i]*histYPr[i])
                 }
-                #cat(paste(labels_relationships[X], '\t', labels_relationships[Y], '\t', BC_matrix[X,Y], '\n'))
                 Y = Y + 1
             } 
             X = X+1 
@@ -421,51 +275,6 @@ for (gg in seq(1, length(all_files))){
         print(BC_matrix)
 
 
-#         # calculate p-values from permutation test
-#         cat("\n")
-#         cat("Matrix of p-values for discriminating each relationship\n")
-#         pvals_matrix = matrix(NA, length(labels_relationships), length(labels_relationships))
-#         colnames(pvals_matrix) <- labels_relationships[labels_printorder]
-#         rownames(pvals_matrix) <- labels_relationships[labels_printorder]
-#         X = 1
-#         while (X <= length(labels_relationships)){
-#             Y = X + 1
-#             while (Y <= length(labels_relationships)){
-#                 pvals_matrix[X,Y] = permTS(data2[,X], data2[,Y], alternative = c("two.sided"), exact = TRUE, method="exact.mc", control=permControl(nmc=(nperms-1)))$p.value
-#                 #pvals_matrix[X,Y] = permTS(data2[,X], data2[,Y], alternative = c("two.sided"), exact = TRUE, method="pclt")$p.value
-#                 #pvals_matrix[X,Y] = permTS(data2[,X], data2[,Y], alternative = c("two.sided"), exact = TRUE, method="exact.ce")$p.value
-#                 #print(permTS(data2[,X], data2[,Y], alternative = c("two.sided"), exact = TRUE, method="exact.mc", control=permControl(nmc=10^4-1)))
-#                 #if (X != Y){ 
-#                 #    if (is.na(pvals_matrix[X,Y]) == 0){
-#                 #        cat(paste(labels_relationships[X], '\t', labels_relationships[Y], '\t', pvals_matrix[X,Y], '\n'))
-#                 #    }
-#                 #}
-#                 Y = Y+1
-#             } 
-#             X = X+1 
-#         }
-#         cat("\n")
-#         print(paste("Can relationship can be discriminated at alpha = ", alpha, "?", sep = ""))
-#         print((pvals_matrix[,2:length(labels_relationships)] < alpha))
-#         cat("\n")
-
-        # calculate p-values from MWU test
-        # pvals_matrix = matrix(NA, length(labels_relationships), length(labels_relationships))
-        # colnames(pvals_matrix) <- labels_relationships[labels_printorder]
-        # rownames(pvals_matrix) <- labels_relationships[labels_printorder]
-        # X = 1
-        # while (X <= length(labels_relationships)){
-        #     Y = X + 1
-        #     while (Y <= length(labels_relationships)){
-        #         pvals_matrix[X,Y] = wilcox.test(data2[,X], data2[,Y])$p.value
-        #         Y = Y+1
-        #     } 
-        #     X = X+1 
-        # }
-        # print(pvals_matrix[,2:length(labels_relationships)])
-        # print(paste("Can relationship can be discriminated at alpha = ", alpha, "?", sep = ""))
-        # print((pvals_matrix[,2:length(labels_relationships)] < alpha))
-
 
         # test normality of distributions
         kstest = rep(NA, length(labels_relationships))
@@ -473,7 +282,6 @@ for (gg in seq(1, length(all_files))){
         op <- options(warn = (-1)) # suppress warnings         
         for (t in 1:length(labels_relationships)){
             kstest[t] = ks.test(data2[,t], rnorm(length(data2[,t]), mean = mean(data2[,t]), sd = sd(data2[,t])))$p.val
-            #kstest[t] = ks.test(data2[,t], "pnorm", mean=mean(data2[,t]), sd=sd(data2[,t]))$p.val
         }
         options(op) # reset default value for warnings
         print(paste("Can a normal distribution be rejected at alpha = ", alpha, "?", sep = ""))
@@ -490,8 +298,6 @@ for (gg in seq(1, length(all_files))){
             names(obsProb) <- labels_relationships
             for (t in 1:length(labels_relationships)){
                 obsDistZ[t] = abs(plotval - mean(data2[,t]))/sd(data2[,t])
-                #obsProb[t] = pnorm(plotval+plotval_std, mean = mean(data2[,t]), sd = sd(data2[,t])) - pnorm(plotval-plotval_std, mean = mean(data2[,t]), sd = sd(data2[,t]))
-                #obsProb[t] = 2*pnorm(-obsDistZ[t])
                 obsProb[t] = pnorm(-obsDistZ[t])
             }
             print("Z-scores")
@@ -551,63 +357,7 @@ for (gg in seq(1, length(all_files))){
             cat(paste(labels_relationships[X], '\t', mean(data2[,X]), '\t', var(data2[,X]), '\n'))
         }
         cat("\n")
-        
-        if (doPlotMeanVar == 1){
-            # make a plot
-            cat("Plotting mean and variance of all relationships\n")
-            #
-            #
-            # TO DO!
-            
-        }
-        
-        
-        # COMPLETE THIS???
-#         if (plot_maxvar_rel != -1){
-#             variances = var(data2[,X])
-#             equal_R_rels_1 = c('parent-child', 'siblings')
-#             
-#             which(labels_relationships == 'parent-child')
-#             which(labels_relationships == 'siblings')
-# 
-#             equal_R_rels_2 = c('gparent-gchild', 'uncle-nephew', 'halfsibs')
-#             relationships_to_delete = ''
-#             
-#             which(equal_R_rels_1 == 'siblings')
-#             
-#             
-#             labels_relationshipsTOPLOT = labels_relationships[-labels_printorder[noPrint]]
-#             labels_printorderTOPLOT = labels_printorder[-noPrint]
-#         } 
-
-
-        # calculate overlaps for each relationship pair assuming normality
-#         overlap_CI_matrix = matrix(NA, length(labels_relationships), length(labels_relationships))
-#         colnames(overlap_CI_matrix) <- labels_relationships[labels_printorder]
-#         rownames(overlap_CI_matrix) <- labels_relationships[labels_printorder]
-#         X = 1
-#         while (X <= length(labels_relationships)){
-#             Y = X + 1
-#             while (Y <= length(labels_relationships)){
-#                 CI_95pct_X = qnorm(c(0.025, 0.985), mean = mean(data2[,X]), sd = sd(data2[,X]))
-#                 CI_95pct_Y = qnorm(c(0.025, 0.985), mean = mean(data2[,Y]), sd = sd(data2[,Y]))
-#                 CI_99pct_X = qnorm(c(0.005, 0.995), mean = mean(data2[,X]), sd = sd(data2[,X]))
-#                 CI_99pct_Y = qnorm(c(0.005, 0.995), mean = mean(data2[,Y]), sd = sd(data2[,Y]))
-# 
-#                 if ((CI_95pct_X[1] <= CI_95pct_Y[2]) & (CI_95pct_Y[1] <= CI_95pct_X[2])){
-#                     overlap_CI_matrix[X,Y] = 0.05
-#                 } else if ((CI_99pct_X[1] <= CI_99pct_Y[2]) & (CI_99pct_Y[1] <= CI_99pct_X[2])){
-#                     overlap_CI_matrix[X,Y] = 0.01
-#                 } else{
-#                     overlap_CI_matrix[X,Y] = 0.00
-#                 }
-#                 Y = Y+1
-#             } 
-#             X = X+1 
-#         }
-#         cat("Matrix of overlap of 95% and 99% CI\n")
-#         print(overlap_CI_matrix[,2:length(labels_relationships)])
-
+                
 
         # calculate overlapping for each relationship pair assuming normality
         overlap_areas = matrix(NA, length(labels_relationships), length(labels_relationships))
@@ -630,55 +380,39 @@ for (gg in seq(1, length(all_files))){
                 sd1 = sd(data2[,X])
                 u2 = mean(data2[,Y])
                 sd2 = sd(data2[,Y])
-                #if (u1 < u2){
-                    R1 = ((u1*sd2*sd2) - (u2*sd1*sd1) + (sd1*sd2*sqrt(((u1-u2)*(u1-u2)) + (((sd2*sd2) - (sd1*sd1))*log((sd2*sd2)/(sd1*sd1))))))/((sd2*sd2)-(sd1*sd1))
-                    R2 = ((u1*sd2*sd2) - (u2*sd1*sd1) - (sd1*sd2*sqrt(((u1-u2)*(u1-u2)) + (((sd2*sd2) - (sd1*sd1))*log((sd2*sd2)/(sd1*sd1))))))/((sd2*sd2)-(sd1*sd1))
-                    X1 = min(R1, R2)
-                    X2 = max(R1, R2)
-                    # find overlapping area
-                    overlap_areas[X,Y]  = pnorm((X1 - u1)/sd1) + pnorm((X2 - u2)/sd2) - pnorm((X1 - u2)/sd2) - pnorm((X2 - u1)/sd1) + 1
-                    if (is.nan(overlap_areas[X,Y]) == FALSE){
-                        if (overlap_areas[X,Y] > 1){
-                            overlap_areas[X,Y] = NA
-                        }
+                R1 = ((u1*sd2*sd2) - (u2*sd1*sd1) + (sd1*sd2*sqrt(((u1-u2)*(u1-u2)) + (((sd2*sd2) - (sd1*sd1))*log((sd2*sd2)/(sd1*sd1))))))/((sd2*sd2)-(sd1*sd1))
+                R2 = ((u1*sd2*sd2) - (u2*sd1*sd1) - (sd1*sd2*sqrt(((u1-u2)*(u1-u2)) + (((sd2*sd2) - (sd1*sd1))*log((sd2*sd2)/(sd1*sd1))))))/((sd2*sd2)-(sd1*sd1))
+                X1 = min(R1, R2)
+                X2 = max(R1, R2)
+                # find overlapping area
+                overlap_areas[X,Y]  = pnorm((X1 - u1)/sd1) + pnorm((X2 - u2)/sd2) - pnorm((X1 - u2)/sd2) - pnorm((X2 - u1)/sd1) + 1
+                if (is.nan(overlap_areas[X,Y]) == FALSE){
+                    if (overlap_areas[X,Y] > 1){
+                        overlap_areas[X,Y] = NA
                     }
-                    # find ORs for 100 randomly drawn values     
-                    obs = rnorm(100, mean = u1, sd = sd1)
-                    vals = rep(NA, length(obs))
-                    for (m in 1:length(obs)){
-                        vals[m] = ((1 - pnorm((obs[m] - u1)/sd1)) / pnorm((obs[m] - u1)/sd1)) / (pnorm((obs[m] - u2)/sd2) / (1 - pnorm((obs[m] - u2)/sd2)))
-                    }
-                    OR1v2[X,Y] = mean(vals);
-                    PrOR1v2gt10[X,Y] = length(which(vals > 10)) / length(vals)
-                    PrOR1v2gt100[X,Y] = length(which(vals > 100)) / length(vals)
-                #}
+                }
+                # find ORs for 100 randomly drawn values     
+                obs = rnorm(100, mean = u1, sd = sd1)
+                vals = rep(NA, length(obs))
+                for (m in 1:length(obs)){
+                    vals[m] = ((1 - pnorm((obs[m] - u1)/sd1)) / pnorm((obs[m] - u1)/sd1)) / (pnorm((obs[m] - u2)/sd2) / (1 - pnorm((obs[m] - u2)/sd2)))
+                }
+                OR1v2[X,Y] = mean(vals);
+                PrOR1v2gt10[X,Y] = length(which(vals > 10)) / length(vals)
+                PrOR1v2gt100[X,Y] = length(which(vals > 100)) / length(vals)
                 Y = Y+1
             } 
             X = X+1 
         }
         cat("Matrixof overlap areas for relationship pairs\n")
         print(overlap_areas)
-#         for (X in seq(1, length(labels_relationships))){
-#             for (Y in seq(1, length(labels_relationships))){
-#                 if (is.na(overlap_areas[X,Y]) == FALSE){
-#                     cat(paste(labels_relationships[X], ' vs ', labels_relationships[Y], '\t', overlap_areas[X,Y], '\n', sep=''))
-#                 }
-#             }
-#         }
         cat("\n")
         cat("Matrix of Pr(OR > 100) for relationship pairs\n")
         print(PrOR1v2gt100)
-#         for (X in seq(1, length(labels_relationships))){
-#             for (Y in seq(1, length(labels_relationships))){
-#                 if (is.na(PrOR1v2gt100[X,Y]) == FALSE){
-#                     cat(paste(labels_relationships[X], ' vs ', labels_relationships[Y], '\t', PrOR1v2gt100[X,Y], '\n', sep=''))
-#                 }
-#             }
-#         }
         cat("\n")
         
         
-        
+
 
 
 
@@ -709,84 +443,8 @@ for (gg in seq(1, length(all_files))){
 
         # PLOT SIMULATION RESULTS
 
-        # if doing a boxplot rather than violin plot
-        if (violin == 0){
-            cat(paste('plotting to: ', filename_base, ".results_plot", label, "pdf\n", sep=""))
-            pdf(paste(filename_base, ".results_plot", label, "pdf", sep=""))
-            #dev.new()
-            #x11()
-    
-            if (plotmax != -1 & plotmin != -1){
-                boxplot(data2[,labels_printorderTOPLOT], outline = TRUE, xaxt="n", range=range, notch=F, ylab="PWD/site", main=paste(substr(filename_base[1], 149, nchar(filename_base[1])),', ', 'numSNPs=', as.character(numvar_sum), ', numreps=', as.character(to_sample), sep=""), cex.main=0.80, ylim=c(plotmin, plotmax))
-            } else{
-                boxplot(data2[,labels_printorderTOPLOT], outline = TRUE, xaxt="n", range=range, notch=F, ylab="PWD/site", main=paste(substr(filename_base[1], 149, nchar(filename_base[1])),', ', 'numSNPs=', as.character(numvar_sum), ', numreps=', as.character(to_sample), sep=""), cex.main=0.80)
-            }
-            axis(1, at=seq(1, length(labels_relationshipsTOPLOT[labels_printorderTOPLOT]), by=1), labels = FALSE)
-            text(x = seq(1, length(labels_relationshipsTOPLOT[labels_printorderTOPLOT]), by=1), y = min(data2[,labels_printorderTOPLOT])-0.1*(max(data2[,labels_printorderTOPLOT]) - min(data2[,labels_printorderTOPLOT])), labels = labels_relationships[labels_printorderTOPLOT], srt = 90, pos = 1, xpd = TRUE, cex=0.70)
-        
-            # plot directly observed value if provided
-            if (plotval != -1){
-                segments(x0=0.5, y0=plotval, x1=0.5+length(labels), y1=plotval, lwd=2, col = "black")
-            }
-            if (plotval_std != -1){
-                segments(x0=0.5, y0=plotval+plotval_std, x1=0.5+length(labels), y1=plotval+plotval_std, lwd=1, col = "black")
-                segments(x0=0.5, y0=plotval-plotval_std, x1=0.5+length(labels), y1=plotval-plotval_std, lwd=1, col = "black")
-            }
-            
-            if (plotdist != ''){
-                plotdist_mean = mean(plotdist[,2])
-                plotdist_std = sd(plotdist[,2])
-                segments(x0=0.5, y0=plotdist_mean, x1=0.5+length(labels), y1=plotdist_mean, lwd=2, col = "black")
-                segments(x0=0.5, y0=plotdist_mean+plotdist_std, x1=0.5+length(labels), y1=plotdist_mean+plotdist_std, lwd=1, col = "black")
-                segments(x0=0.5, y0=plotdist_mean-plotdist_std, x1=0.5+length(labels), y1=plotdist_mean-plotdist_std, lwd=1, col = "black")
-            }
-        
-            if (doPlotExp == 1){
-                # plot lines for expected values of pwdiff
-                num_cov_SNPs_blocksums  = colSums(data_SNPscov[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_blocksums         = colSums(data_pwexp[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_sibs_blocksums    = colSums(data_pwexp_sibs[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_gpgc_blocksums    = colSums(data_pwexp_gpgc[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_twins_blocksums   = colSums(data_pwexp_twins[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_fcous_blocksums   = colSums(data_pwexp_fcous[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                for (ttt in sampled_blockstarts[2:length(sampled_blockstarts)]){
-                    num_cov_SNPs_blocksums  = rbind(num_cov_SNPs_blocksums, colSums(data_SNPscov[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_blocksums         = rbind(pwexp_blocksums, colSums(data_pwexp[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_sibs_blocksums    = rbind(pwexp_sibs_blocksums, colSums(data_pwexp_sibs[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_gpgc_blocksums    = rbind(pwexp_gpgc_blocksums, colSums(data_pwexp_gpgc[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_twins_blocksums   = rbind(pwexp_twins_blocksums, colSums(data_pwexp_twins[ttt:(ttt+21),1:length(labels)]))                
-                    pwexp_fcous_blocksums   = rbind(pwexp_fcous_blocksums, colSums(data_pwexp_fcous[ttt:(ttt+21),1:length(labels)]))
-                }
-            
-                new_expected_means          = (((pwexp_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means          = new_expected_means[,labels_printorderTOPLOT]
-                new_expected_means_sibs     = (((pwexp_sibs_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_sibs     = new_expected_means_sibs[,labels_printorderTOPLOT]            
-                new_expected_means_gpgc     = (((pwexp_gpgc_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_gpgc     = new_expected_means_gpgc[,labels_printorderTOPLOT]            
-                new_expected_means_twins    = (((pwexp_twins_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_twins    = new_expected_means_twins[,labels_printorderTOPLOT]       
-                new_expected_means_fcous    = (((pwexp_fcous_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_fcous    = new_expected_means_fcous[,labels_printorderTOPLOT]            
-                for (ttt in seq(1, length(labels_printorderTOPLOT), by=1)){
-                    for (ggg in seq(1, to_sample, by=1)){
-                        segments(x0=ttt-0.4, y0=new_expected_means[ggg,ttt], x1=ttt+0.4, y1=new_expected_means[ggg,ttt], col = adjustcolor("blue", alpha.f=0.2))
-                        segments(x0=ttt-0.4, y0=new_expected_means_sibs[ggg,ttt], x1=ttt+0.4, y1=new_expected_means_sibs[ggg,ttt], col = adjustcolor("purple", alpha.f=0.2))
-                        segments(x0=ttt-0.4, y0=new_expected_means_gpgc[ggg,ttt], x1=ttt+0.4, y1=new_expected_means_gpgc[ggg,ttt], col = adjustcolor("red", alpha.f=0.2))
-                        segments(x0=ttt-0.4, y0=new_expected_means_twins[ggg,ttt], x1=ttt+0.4, y1=new_expected_means_twins[ggg,ttt], col = adjustcolor("green", alpha.f=0.2))
-                        segments(x0=ttt-0.4, y0=new_expected_means_fcous[ggg,ttt], x1=ttt+0.4, y1=new_expected_means_fcous[ggg,ttt], col = adjustcolor("pink", alpha.f=0.2))
-                    }
-                }  
-            }  
-        }
-        
-        # do a violin plot rather than boxplot
+        # do a violin plot
         if (violin == 1){
-            #colors = c("white", "gold", "tomato", "springgreen4", "tan1", "tomato4", "royalblue4", "lightsalmon")
-            #for (t in seq(1, length(labels_printorderTOPLOT))){
-            #    vioplot(data2[,labels_printorderTOPLOT[t]], range=range, add=TRUE, at=t, col=colors[t], colMed=rgb(0,0,0,alpha=0.0))
-            #}
-            
             breaklabels = paste(rep('V',length(labels_printorderTOPLOT)), seq(1, length(labels_printorderTOPLOT)), sep='')
             GV = ggplot(data=melt(as.data.frame(data2[,labels_printorderTOPLOT])), aes(y=value, x=variable, fill=factor(variable))) + geom_violin(alpha = 0.5, scale="width") + scale_fill_manual(values=cbPalette[labels_printorderTOPLOT], breaks=breaklabels, labels=labels_relationshipsTOPLOT[labels_printorderTOPLOT]) + theme(legend.title=element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) + labs(y="Pairwise differences per site")
             # incorporate plotmax and plotmin                                                                                                                                                                + scale_fill_discrete(breaks=breaklabels, labels=labels_relationshipsTOPLOT[labels_printorderTOPLOT])    
@@ -813,59 +471,10 @@ for (gg in seq(1, length(all_files))){
                 GV = GV + ylim(plotmin, plotmax)
             }
             
-            if (doPlotExp == 1){
-                # plot lines for expected values of pwdiff      
-                num_cov_SNPs_blocksums  = colSums(data_SNPscov[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_blocksums         = colSums(data_pwexp[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_sibs_blocksums    = colSums(data_pwexp_sibs[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_gpgc_blocksums    = colSums(data_pwexp_gpgc[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_twins_blocksums   = colSums(data_pwexp_twins[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                pwexp_fcous_blocksums   = colSums(data_pwexp_fcous[sampled_blockstarts[1]:sampled_blockstarts[1]+1, 1:length(labels)])
-                for (ttt in sampled_blockstarts[2:length(sampled_blockstarts)]){
-                    num_cov_SNPs_blocksums  = rbind(num_cov_SNPs_blocksums, colSums(data_SNPscov[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_blocksums         = rbind(pwexp_blocksums, colSums(data_pwexp[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_sibs_blocksums    = rbind(pwexp_sibs_blocksums, colSums(data_pwexp_sibs[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_gpgc_blocksums    = rbind(pwexp_gpgc_blocksums, colSums(data_pwexp_gpgc[ttt:(ttt+21),1:length(labels)]))
-                    pwexp_twins_blocksums   = rbind(pwexp_twins_blocksums, colSums(data_pwexp_twins[ttt:(ttt+21),1:length(labels)]))                
-                    pwexp_fcous_blocksums   = rbind(pwexp_fcous_blocksums, colSums(data_pwexp_fcous[ttt:(ttt+21),1:length(labels)]))
-                }
-                new_expected_means          = (((pwexp_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means          = new_expected_means[,labels_printorder]
-                new_expected_means_sibs     = (((pwexp_sibs_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_sibs     = new_expected_means_sibs[,labels_printorder]            
-                new_expected_means_gpgc     = (((pwexp_gpgc_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_gpgc     = new_expected_means_gpgc[,labels_printorder]            
-                new_expected_means_twins    = (((pwexp_twins_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_twins    = new_expected_means_twins[,labels_printorder]       
-                new_expected_means_fcous    = (((pwexp_fcous_blocksums/num_cov_SNPs_blocksums)))
-                new_expected_means_fcous    = new_expected_means_fcous[,labels_printorder]            
-                
-                cat('printing expected values lines...\n')
-                GV = GV + geom_jitter(data=melt(as.data.frame(new_expected_means[,labels_printorderTOPLOT])),       alpha=0.10) + scale_fill_manual(values=cbPalette[labels_printorder]) 
-                GV = GV + geom_jitter(data=melt(as.data.frame(new_expected_means_sibs[,labels_printorderTOPLOT])),  alpha=0.10) + scale_fill_manual(values=cbPalette[labels_printorder])  
-                GV = GV + geom_jitter(data=melt(as.data.frame(new_expected_means_gpgc[,labels_printorderTOPLOT])),  alpha=0.10) + scale_fill_manual(values=cbPalette[labels_printorder])  
-                GV = GV + geom_jitter(data=melt(as.data.frame(new_expected_means_twins[,labels_printorderTOPLOT])), alpha=0.10) + scale_fill_manual(values=cbPalette[labels_printorder]) 
-                GV = GV + geom_jitter(data=melt(as.data.frame(new_expected_means_fcous[,labels_printorderTOPLOT])), alpha=0.10) + scale_fill_manual(values=cbPalette[labels_printorder]) 
-                ##geom_boxplot(mapping = NULL, data = NULL, stat = "boxplot", position = "dodge", ..., outlier.colour = NULL, outlier.color = NULL, outlier.shape = 19, outlier.size = 1.5, outlier.stroke = 0.5, notch = FALSE, notchwidth = 0.5, varwidth = FALSE, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE)
-                #GV = GV + geom_boxplot(data=melt(as.data.frame(new_expected_means[,labels_printorder])), outlier.size = 0)       + scale_fill_manual(values=cbPalette[labels_printorder]) 
-                #GV = GV + geom_boxplot(data=melt(as.data.frame(new_expected_means_sibs[,labels_printorder])), outlier.size = 0)  + scale_fill_manual(values=cbPalette[labels_printorder])  
-                #GV = GV + geom_boxplot(data=melt(as.data.frame(new_expected_means_gpgc[,labels_printorder])), outlier.size = 0)  + scale_fill_manual(values=cbPalette[labels_printorder])  
-                #GV = GV + geom_boxplot(data=melt(as.data.frame(new_expected_means_twins[,labels_printorder])), outlier.size = 0) + scale_fill_manual(values=cbPalette[labels_printorder]) 
-                #GV = GV + geom_boxplot(data=melt(as.data.frame(new_expected_means_fcous[,labels_printorder])), outlier.size = 0) + scale_fill_manual(values=cbPalette[labels_printorder]) 
-            }
             cat(paste('plotting to: ', filename_base, ".results_plot", label, "pdf\n", sep=""))
             ggsave(paste(filename_base, ".results_plot", label, "pdf", sep=""), plot = GV, width = w, height = h)
         }
 
-        # if making a plot containing histograms of simulated genetic distance for all relationships
-        if (doHists == 1){            
-            breaklabels = paste(rep('V',length(labels_printorderTOPLOT)), seq(1, length(labels_printorderTOPLOT)), sep='')
-            G = ggplot(data=melt(as.data.frame(data2[,labels_printorderTOPLOT])), aes(value, fill=factor(variable))) + geom_histogram(alpha = 0.5, binwidth=(max(data2)-min(data2))/200) + scale_fill_discrete(breaks=breaklabels, labels=labels_relationshipsTOPLOT[labels_printorderTOPLOT]) + theme(legend.title=element_blank())     
-            ggsave(paste(filename_base, ".hists_plot", label, "pdf", sep=""), plot = G)
-        }
-        if (violin == 0){
-            dev.off()
-        }
     }
 }
 cat(paste('...done!', '\n'))

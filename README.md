@@ -81,8 +81,8 @@
     
     5d. Concatenate and plot simulation statistics
         5d1. bash pedigree_sims_concat.sh Troc1rmdup_Troc3rmdup_pileup ../analyses/pedigree_sims/2016-11-11_Haaketal_mindepth1_onlyTv_ds1.0_c0_q0/ ConcatenatedReps/
-        5d2. Rscript plot_pedigree_sims.R data_dir=../analyses/pedigree_sims/2016-11-11_Haaketal_mindepth1_onlyTv_ds1.0_c0_q0/ConcatenatedReps/ regex=*Troc1rmdup_Troc3rmdup_pileup.out range=1.5 violin plotval=0.225893,0.00122087 w=6 h=6 noPrint=1,3,6,7
-            # PLOTTING STILL NEEDS TO BE DEFINED BY PEDIGREE DEFINITION FILE
+        5d2. Rscript plot_pedigree_sims.R data_dir=../analyses/pedigree_sims/2016-11-11_Haaketal_mindepth1_onlyTv_ds1.0_c0_q0/ConcatenatedReps/ regex=*Troc1rmdup_Troc3rmdup_pileup.out range=1.5 plotval=0.225893,0.00122087 w=6 h=6 noPrint=1,3,6,7
+            # PLOTTING STILL NEEDS TO BE DEFINED BY LABELS FILE. NOT COMPLETELY IMPLEMENTED.
     
     5e. Simulate pairwise genetic distances within a pedigree of randomly chosen individuals, with genetic distance calculations 
         at all genomic positions contained in the pileup file that meet the read depth/quality criteria.
