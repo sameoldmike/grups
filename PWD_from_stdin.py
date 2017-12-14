@@ -94,6 +94,7 @@ parser.add_argument("--targets", type=str, help="")
 parser.add_argument("--pileup", type=str, help="")
 parser.add_argument("--chr", type=str, help="")
 
+args = parser.parse_args()
 if args.verbose:                                          
     verbose = 1
 if args.quiet:   
