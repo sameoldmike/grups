@@ -93,8 +93,8 @@ parser.add_argument("--lines", type=str, help="")
 parser.add_argument("--targets", type=str, help="")
 parser.add_argument("--pileup", type=str, help="")
 parser.add_argument("--chr", type=str, help="")
-
 args = parser.parse_args()
+
 if args.verbose:                                          
     verbose = 1
 if args.quiet:   
@@ -294,6 +294,8 @@ chr_sitecounts = []
 chr_PWDcounts = []
 #for row in pileup_data:
 for line in sys.stdin:
+    if verbose == 1:
+        print line
     line = line.rstrip('\n')
     row = line.split('\t')
     #print row
