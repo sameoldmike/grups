@@ -76,16 +76,16 @@ targets_file = ''
 lines = 1000000
 filter_sites = 0
 ignore_dels = 0           
-block_JK = 0            # block jack-knife mode ON/OFF
+block_JK = 0            # block jack-knife mode OFF by default
 blocksize = 10000000
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--verbose", type=str, help="")
-parser.add_argument("--quiet", type=str, help="")
-parser.add_argument("--self_comparison", type=str, help="")
-parser.add_argument("--known_variants", type=str, help="")
-parser.add_argument("--filter_sites", type=str, help="")
-parser.add_argument("--ignore_dels", type=str, help="")
+parser.add_argument("--verbose", type=int, help="")
+parser.add_argument("--quiet", type=int, help="")
+parser.add_argument("--self_comparison", type=int, help="")
+parser.add_argument("--known_variants", type=int, help="")
+parser.add_argument("--filter_sites", type=int, help="")
+parser.add_argument("--ignore_dels", type=int, help="")
 parser.add_argument("--min_depth", type=str, help="")
 parser.add_argument("--min_qual", type=str, help="")
 parser.add_argument("--samples", type=str, help="")
@@ -234,25 +234,26 @@ if targets_file != '':
 
 
 # Calculate block edges using blocksize for block_JK mode
-block_edges = [None]*len(chrlengths)
-block_sitecounts = [None]*len(chrlengths)
-block_PWDcounts = [None]*len(chrlengths)
-for chromosome in range(len(chrlengths)):
-    block_edges[chromosome] = []
-    block_sitecounts[chromosome] = []
-    block_PWDcounts[chromosome] = []
+if block_JK == 1:
+    block_edges = [None]*len(chrlengths)
+    block_sitecounts = [None]*len(chrlengths)
+    block_PWDcounts = [None]*len(chrlengths)
+    for chromosome in range(len(chrlengths)):
+        block_edges[chromosome] = []
+        block_sitecounts[chromosome] = []
+        block_PWDcounts[chromosome] = []
 
-    for X in range(1, chrlengths[chromosome]+1, blocksize):
-        if X != 1:
-            block_edges[chromosome].append(X)
+        for X in range(1, chrlengths[chromosome]+1, blocksize):
+            if X != 1:
+                block_edges[chromosome].append(X)
+                block_sitecounts[chromosome].append(0)
+                block_PWDcounts[chromosome].append(0)
+        if block_edges[chromosome][-1] < chrlengths[chromosome]:
+            block_edges[chromosome].append(chrlengths[chromosome])
             block_sitecounts[chromosome].append(0)
             block_PWDcounts[chromosome].append(0)
-    if block_edges[chromosome][-1] < chrlengths[chromosome]:
-        block_edges[chromosome].append(chrlengths[chromosome])
-        block_sitecounts[chromosome].append(0)
-        block_PWDcounts[chromosome].append(0)
-    if verbose == 1:
-        print 'block_edges[chromosome] =', block_edges[chromosome]
+        if verbose == 1:
+            print 'block_edges[chromosome] =', block_edges[chromosome]
 
 
 
@@ -489,22 +490,6 @@ for line in sys.stdin:
                         
                             valid_base_choices.append([choice1, choice2])
                             valid_base_quals.append([qual1, qual2])
-
-                            # TRI-ALLELIC FILTERING (and only_tv) DISABLED (to match implementation in pedigree_sims.*.py)
-                            """
-                             filter out tri-allelic observations and transitions, if applicable       
-                             CHECK IF THIS MAKES SENSE. AM I FILTERING TRIALLELIC SITES ALWAYS?
-                            ref_base = row[2]
-                            if only_tv == 1 and len(set([ref_base, choice1, choice2])) <= 2:
-                                if (ref_base == choice1) or (int([ref_base, choice1] in transversions) == 1):
-                                    if (ref_base == choice2) or (int([ref_base, choice2] in transversions) == 1):                        
-                                        valid_base_choices.append([choice1, choice2])
-                                        valid_base_quals.append([qual1, qual2])
-                            # need to implement the counter filtered_triallelic_sites += 1 here ...
-                            elif only_tv == 0:  
-                                valid_base_choices.append([choice1, choice2])
-                                valid_base_quals.append([qual1, qual2])
-                            """        
                                         
                     overlap_sites += 1
                 
@@ -542,8 +527,10 @@ for line in sys.stdin:
                             chr_PWDcounts[chr_labels.index(row[0])] += 1
                             # count the mismatch type
                             mismatches_1dir_counts[mismatches_1dir.index(set([valid_base_choices[h][0], valid_base_choices[h][1]]))] += 1.0
-                            # update block-specific mismatch count
-                            block_PWDcounts[current_chr][current_block] += 1
+                            
+                            if block_JK == 1:
+                                # update block-specific mismatch count
+                                block_PWDcounts[current_chr][current_block] += 1
                             
                             if verbose == 1:
                                 print '---PWD---'
@@ -614,8 +601,10 @@ for line in sys.stdin:
                                 chr_PWDcounts[chr_labels.index(row[0])] += 1 
                                 # count the mismatch type
                                 mismatches_1dir_counts[mismatches_1dir.index(set([choice1, choice2]))] += 1
-                                # update block-specific mismatch count
-                                block_PWDcounts[current_chr][current_block] += 1
+                                
+                                if block_JK == 1:
+                                    # update block-specific mismatch count
+                                    block_PWDcounts[current_chr][current_block] += 1
 
                                 if verbose == 1:
                                     print '---PWD---'
