@@ -219,7 +219,5 @@ python pedigree_sims.py
 
 For more information check: [https://github.com/sameoldmike/grups/](https://github.com/sameoldmike/grups/).
 
-To report issues, contact Mike Martin: mike.martin@ntnu.no.  When reporting 
-issues, please be as specific as possible regarding software environment, 
-version numbers, and output. 
+**IMPORTANT NOTE**: This software (reported in Martin et al. 2017: https://doi.org/10.1111/mec.14188) is no longer being maintained. Please now use the much improved software GRUPS-rs (reported in Lefeuvre et al. 2024: https://doi.org/10.47248/hpgg2404010001). The GRUPS-rs github page is here: https://github.com/MaelLefeuvre/grups-rs
 
